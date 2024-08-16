@@ -1,8 +1,7 @@
-# React + Vite
+# Daily Order Excel Sorter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Created using React + Vite
 
-Currently, two official plugins are available:
+This app will allow users to upload an excel sheet with the daily orders and from there go to the shipping status column and return a new sheet that has just the orders that haven't been shipped yet. 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+It will also include a section to paste in previously processed orders in order to prevent processed orders from being reprinted.
