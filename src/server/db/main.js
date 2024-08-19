@@ -47,7 +47,36 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         }
     });
 
-    
+    // new workbook w filtered data
+    const newWorkbook = new ExcelJS.Workbook();
+    const newWorksheet = newWorkbook.addWorksheet("Orders Today");
 
+    // add header row
+    newWorksheet.addRow(worksheet.getRow(1).values);
+
+    // add filtered rows
+    filteredRows.forEach((row) => newWorksheet.addRow(row));
+
+    // save new excel file
+    const filteredFilePath = path.join(__dirname, "AiperDropshipOrders.xlsx");
+    await newWorkbook.xlsx.writeFile(filteredFilePath);
+    
+    // send new file
+    res.download(filteredFilePath, "AiperDropshipOrders.xlsx", (err) => {
+        if (err) console.log("Error sending file:", err);
+
+        // clean up temp files
+        fs.unlinkSync(filePath);
+        fs.unlinkSync(filteredFilePath);
+    });
+  } catch (error) {
+    console.error("Error processing Excel file:", error);
+    res.status(500).send("Failed ot process Excel file.");
   }
+});
+
+// start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
