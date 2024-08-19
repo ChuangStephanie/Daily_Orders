@@ -40,6 +40,29 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
   const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
 
+  // clear old files in processed folder
+  const clearProcessedDir = () => {
+    fs.readdir(processedDir, (err, files) => {
+      if (err) {
+        console.err("Error reading processed dir:", err);
+        return;
+      }
+
+      files.forEach((file) => {
+        const filePath = path.join(processedDir, file);
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error("Error deleting file:", err);
+          } else {
+            console.log(`Deleted file: ${filePath}`);
+          }
+        });
+      });
+    });
+  };
+
+  clearProcessedDir();
+
   try {
     // load uploaded excel file
     const workbook = new ExcelJS.Workbook();
