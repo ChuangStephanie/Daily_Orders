@@ -6,16 +6,39 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const uploadDir = path.join(__dirname, "uploads");
+const uploadDir = path.join(__dirname, "db", "uploads");
+const processedDir = path.join(__dirname, "db", "processed");
+console.log("Directory path:", uploadDir, "Processed path:", processedDir);
 const upload = multer({ dest: uploadDir });
 
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+// check if dir exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+if (!fs.existsSync(processedDir)) {
+  fs.mkdirSync(processedDir, { recursive: true });
+}
+
 // route for file uploads and filtering
 app.post("/upload", upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  console.log("Uploaded file details:", req.file);
+
   const filePath = req.file.path;
-  const { columnName, searchTerm, includeBlanks } = req.body;
+  const { columnName, searchTerm, includeBlanks: includeBlanksStr } = req.body;
+  const includeBlanks = includeBlanksStr === "true";
+
+  const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
 
   try {
     // load uploaded excel file
@@ -63,13 +86,27 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     // add filtered rows
     filteredRows.forEach((row) => newWorksheet.addRow(row));
 
-    // save new excel file
-    const filteredFilePath = path.join(__dirname, "AiperDropshipOrders.xlsx");
-    await newWorkbook.xlsx.writeFile(filteredFilePath);
+    try {
+      // save new excel file
+      console.log(`Attempting to save new file to: ${filteredFilePath}`);
+      await newWorkbook.xlsx.writeFile(filteredFilePath);
+      console.log("File saved status:", fs.existsSync(filteredFilePath));
+    } catch (error) {
+      console.error("Error writing file:", error);
+      return res.status(500).send("Failed to save filtered file");
+    }
+    // check if file saved
+    if (!fs.existsSync(filteredFilePath)) {
+      console.error("New file not saved correctly.");
+      return res.status(500).send("Failed to save filterd file.");
+    }
 
     // send new file
     res.download(filteredFilePath, "AiperDropshipOrders.xlsx", (err) => {
-      if (err) console.log("Error sending file:", err);
+      if (err) {
+        console.log("Error sending file:", err);
+        res.status(500).send("Failed to send file.");
+      }
     });
   } catch (error) {
     console.error("Error processing Excel file:", error);
@@ -77,7 +114,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   } finally {
     // clean up temp files
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    if (fs.existsSync(filteredFilePath)) fs.unlinkSync(filteredFilePath);
   }
 });
 
