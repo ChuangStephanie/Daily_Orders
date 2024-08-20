@@ -74,16 +74,28 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     // get inital worksheet
     const worksheet = workbook.getWorksheet(1);
 
-    // find column index based on column name
-    let columnIndex = -1;
-    worksheet.getRow(1).eachCell((cell, colNumber) => {
-      if (cell.value === columnName) {
-        columnIndex = colNumber;
-      }
+    // find column index based on names
+    const headerRow = worksheet.getRow(1);
+    const colIndices = {};
+    headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      colIndices[cell.value] = colNumber;
     });
 
-    if (columnIndex === -1) {
+    const columnIndex = colIndices[columnName];
+    const sku2Index = colIndices["SKU2"];
+    const sku3Index = colIndices["SKU3"];
+    const sku4Index = colIndices["SKU4"];
+
+    if (columnIndex === undefined) {
       return res.status(400).send("Column not found");
+    }
+
+    if (
+      sku2Index === undefined ||
+      sku3Index === undefined ||
+      sku4Index === undefined
+    ) {
+      return res.status(400).send("SKU columns not found");
     }
 
     // filter rows based on search term
@@ -94,22 +106,19 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
       // filter logic
       if (
-        (includeBlanks && (cellValue === null || cellValue === undefined)) || // will inlcude blanks if requested
+        (includeBlanks && (cellValue === null || cellValue === undefined)) ||
         (cellValue &&
           cellValue.toString().toLowerCase().includes(searchTerm.toLowerCase()))
       ) {
-        // duplicate rows if there are SKU2+
-        const rowData = row.values;
-        let duplicates = 1;
+        // dupe rows based on if there are SKU2+
+        const sku2 = row.getCell(sku2Index).value;
+        const sku3 = row.getCell(sku3Index).value;
+        const sku4 = row.getCell(sku4Index).value;
 
-        // check for more than 1 SKU
-        if (row.getCell("SKU2") && row.getCell("SKU2").value) duplicates++;
-        if (row.getCell("SKU3") && row.getCell("SKU3").value) duplicates++;
-        if (row.getCell("SKU4") && row.getCell("SKU4").value) duplicates++;
+        const skuCount = [sku2, sku3, sku4].filter((sku) => sku).length || 1;
 
-        // dupe rows if multiple SKUs
-        for (let i = 0; i < duplicates; i++) {
-          filteredRows.push(rowData);
+        for (let i = 0; i < skuCount; i++) {
+          filteredRows.push(row.values);
         }
       }
     });
@@ -118,7 +127,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     const ordersWorksheet = workbook.addWorksheet("Orders Today");
 
     // add header row
-    ordersWorksheet.addRow(worksheet.getRow(1).values);
+    ordersWorksheet.addRow(headerRow.values);
 
     // add filtered rows
     filteredRows.forEach((row) => ordersWorksheet.addRow(row));
