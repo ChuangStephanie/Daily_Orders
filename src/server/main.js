@@ -47,13 +47,20 @@ app.post("/upload-processed", upload.single("file"), async (req, res) => {
     await workbook.xlsx.readFile(filePath);
 
     const worksheet = workbook.getWorksheet(2); 
-
-    // Find column index for 'processed'
     const headerRow = worksheet.getRow(1);
-    const processedColIndex =
-      headerRow.findIndex((cell) => cell.value === "processed") + 1;
+    let processedColIndex = -1;
 
-    if (processedColIndex === 0) {
+    // clear old processed orders
+    processedOrders.clear();
+
+    // Find column index for 'processed'  
+    headerRow.eachCell({includeEmpty: false}, (cell, colNumber)=> {
+      if (cell.value === "Processed") {
+        processedColIndex = colNumber;
+      }
+    })
+
+    if (processedColIndex === -1) {
       return res.status(400).send("Processed column not found.");
     }
 
