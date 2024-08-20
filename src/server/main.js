@@ -26,6 +26,12 @@ if (!fs.existsSync(processedDir)) {
   fs.mkdirSync(processedDir, { recursive: true });
 }
 
+const columnName = "物流状态";
+const searchTerm = "暂未上线";
+const includeBlanks = true;
+const machineColName = "品名";
+const machineSearchTerm = "新机";
+
 // route for file uploads and filtering
 app.post("/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
@@ -35,15 +41,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   console.log("Uploaded file details:", req.file);
 
   const filePath = req.file.path;
-  const {
-    columnName,
-    searchTerm,
-    includeBlanks: includeBlanksStr,
-    machineColName,
-    machineSearchTerm,
-  } = req.body;
-  const includeBlanks = includeBlanksStr === "true";
-
   const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
 
   // clear old files in processed folder
@@ -125,7 +122,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     // find column index for machine column
     let machineColIndex = -1;
     ordersWorksheet.getRow(1).eachCell((cell, colNumber) => {
-      if (cell.value === "品名" && machineColIndex === -1) {
+      if (cell.value === machineColName && machineColIndex === -1) {
         machineColIndex = colNumber;
       }
     });
