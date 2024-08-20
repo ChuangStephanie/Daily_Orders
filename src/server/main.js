@@ -82,6 +82,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     });
 
     const columnIndex = colIndices[columnName];
+    const skuIndex = colIndices["SKU1"];
     const sku2Index = colIndices["SKU2"];
     const sku3Index = colIndices["SKU3"];
     const sku4Index = colIndices["SKU4"];
@@ -111,11 +112,12 @@ app.post("/upload", upload.single("file"), async (req, res) => {
           cellValue.toString().toLowerCase().includes(searchTerm.toLowerCase()))
       ) {
         // dupe rows based on if there are SKU2+
+        const sku = row.getCell(skuIndex).value;
         const sku2 = row.getCell(sku2Index).value;
         const sku3 = row.getCell(sku3Index).value;
         const sku4 = row.getCell(sku4Index).value;
 
-        const skuCount = [sku2, sku3, sku4].filter((sku) => sku).length || 1;
+        const skuCount = [sku, sku2, sku3, sku4].filter((sku) => sku).length;
 
         for (let i = 0; i < skuCount; i++) {
           filteredRows.push(row.values);
