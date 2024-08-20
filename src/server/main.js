@@ -125,7 +125,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     // find column index for machine column
     let machineColIndex = -1;
     ordersWorksheet.getRow(1).eachCell((cell, colNumber) => {
-      if (cell.value === machineColName) {
+      if (cell.value === "品名" && machineColIndex === -1) {
         machineColIndex = colNumber;
       }
     });
