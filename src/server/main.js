@@ -98,7 +98,19 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         (cellValue &&
           cellValue.toString().toLowerCase().includes(searchTerm.toLowerCase()))
       ) {
-        filteredRows.push(row.values);
+        // duplicate rows if there are SKU2+
+        const rowData = row.values;
+        let duplicates = 1;
+
+        // check for more than 1 SKU
+        if (row.getCell("SKU2") && row.getCell("SKU2").value) duplicates++;
+        if (row.getCell("SKU3") && row.getCell("SKU3").value) duplicates++;
+        if (row.getCell("SKU4") && row.getCell("SKU4").value) duplicates++;
+
+        // dupe rows if multiple SKUs
+        for (let i = 0; i < duplicates; i++) {
+          filteredRows.push(rowData);
+        }
       }
     });
 
@@ -138,12 +150,11 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       console.log("Cell Value:", cellValue);
 
       if (
-        (includeBlanks && (cellValue === null || cellValue === undefined)) ||
-        (cellValue &&
-          cellValue
-            .toString()
-            .toLowerCase()
-            .includes(machineSearchTerm.toLowerCase()))
+        cellValue &&
+        cellValue
+          .toString()
+          .toLowerCase()
+          .includes(machineSearchTerm.toLowerCase())
       ) {
         console.log("Added row to machine sheet:", row.values);
         machineSheet.addRow(row.values);
