@@ -35,7 +35,13 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   console.log("Uploaded file details:", req.file);
 
   const filePath = req.file.path;
-  const { columnName, searchTerm, includeBlanks: includeBlanksStr } = req.body;
+  const {
+    columnName,
+    searchTerm,
+    includeBlanks: includeBlanksStr,
+    machineColName,
+    machineSearchTerm,
+  } = req.body;
   const includeBlanks = includeBlanksStr === "true";
 
   const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
@@ -68,7 +74,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
 
-    // get first worksheet
+    // get inital worksheet
     const worksheet = workbook.getWorksheet(1);
 
     // find column index based on column name
@@ -99,20 +105,57 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       }
     });
 
-    // new workbook w filtered data
-    const newWorkbook = new ExcelJS.Workbook();
-    const newWorksheet = newWorkbook.addWorksheet("Orders Today");
+    // create orders today sheet
+    const ordersWorksheet = workbook.addWorksheet("Orders Today");
 
     // add header row
-    newWorksheet.addRow(worksheet.getRow(1).values);
+    ordersWorksheet.addRow(worksheet.getRow(1).values);
 
     // add filtered rows
-    filteredRows.forEach((row) => newWorksheet.addRow(row));
+    filteredRows.forEach((row) => ordersWorksheet.addRow(row));
 
+    // create machine and parts sheets
+    const machineSheet = workbook.addWorksheet("Machine");
+    const partsSheet = workbook.addWorksheet("Parts");
+
+    // copy header row to machine and parts sheets
+    machineSheet.addRow(ordersWorksheet.getRow(1).values);
+    partsSheet.addRow(ordersWorksheet.getRow(1).values);
+
+    // find column index for machine column
+    let machineColIndex = -1;
+    ordersWorksheet.getRow(1).eachCell((cell, colNumber) => {
+      if (cell.value === machineColName) {
+        machineColIndex = colNumber;
+      }
+    });
+
+    if (machineColIndex === -1) {
+      return res.status(400).send("Machine column not found.");
+    }
+
+    // filter rows for machine and parts sheets
+    ordersWorksheet.eachRow({ includeEmpty: false }, (row, number) => {
+      if (rowNumber === 1) return;
+      const cellValue = row.getCell(machineColIndex).value;
+
+      if (
+        cellValue &&
+        cellValue
+          .toString()
+          .toLowerCase()
+          .includes(machineSearchTerm.toLowerCase())
+      ) {
+        machineSheet.addRow(row.values);
+      } else {
+        partsSheet.addRow(row.values);
+      }
+    });
+
+    // save final file
     try {
-      // save new excel file
       console.log(`Attempting to save new file to: ${filteredFilePath}`);
-      await newWorkbook.xlsx.writeFile(filteredFilePath);
+      await workbook.xlsx.writeFile(filteredFilePath);
       console.log("File saved status:", fs.existsSync(filteredFilePath));
     } catch (error) {
       console.error("Error writing file:", error);
