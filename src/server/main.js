@@ -31,6 +31,49 @@ const searchTerm = "暂未上线";
 const includeBlanks = true;
 const machineColName = "品名";
 const machineSearchTerm = "新机";
+const trackingNum = "跟踪号"
+
+let processedOrders = new Set();
+
+app.post("/upload-processed", upload.single("file"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send("No file uploaded.");
+  }
+
+  const filePath = req.file.path;
+
+  try {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
+
+    const worksheet = workbook.getWorksheet(2); 
+
+    // Find column index for 'processed'
+    const headerRow = worksheet.getRow(1);
+    const processedColIndex =
+      headerRow.findIndex((cell) => cell.value === "processed") + 1;
+
+    if (processedColIndex === 0) {
+      return res.status(400).send("Processed column not found.");
+    }
+
+    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber === 1) return; 
+      const processedValue = row.getCell(processedColIndex).value;
+      if (processedValue) {
+        processedOrders.add(processedValue.toString().trim()); 
+      }
+    });
+
+    res.send("Processed file data loaded successfully.");
+  } catch (error) {
+    console.error("Error processing second Excel file:", error);
+    res.status(500).send("Failed to process second Excel file.");
+  } finally {
+    // Clean up temp files
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+});
 
 // route for file uploads and filtering
 app.post("/upload", upload.single("file"), async (req, res) => {
@@ -86,8 +129,9 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     const sku2Index = colIndices["SKU2"];
     const sku3Index = colIndices["SKU3"];
     const sku4Index = colIndices["SKU4"];
+    const trackingNumIndex = colIndices[trackingNum];
 
-    if (columnIndex === undefined) {
+    if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
     }
 
@@ -104,6 +148,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       if (rowNumber === 1) return;
       const cellValue = row.getCell(columnIndex).value;
+      const trackingNumber = row.getCell(trackingNumIndex).value;
 
       // filter logic
       if (
@@ -111,6 +156,12 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         (cellValue &&
           cellValue.toString().toLowerCase().includes(searchTerm.toLowerCase()))
       ) {
+
+        if (trackingNumber && processedOrders.has(trackingNumber.toString().trim())) {
+          console.log("Skip row with processed tracking num:", trackingNumber);
+          return;
+        }
+
         // dupe rows based on if there are SKU2+
         const sku = row.getCell(skuIndex).value;
         const sku2 = row.getCell(sku2Index).value;
