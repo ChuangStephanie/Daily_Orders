@@ -135,19 +135,23 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     }
 
     // filter rows for machine and parts sheets
-    ordersWorksheet.eachRow({ includeEmpty: false }, (row, number) => {
+    ordersWorksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       if (rowNumber === 1) return;
       const cellValue = row.getCell(machineColIndex).value;
+      console.log("Cell Value:", cellValue);
 
       if (
-        cellValue &&
-        cellValue
-          .toString()
-          .toLowerCase()
-          .includes(machineSearchTerm.toLowerCase())
+        (includeBlanks && (cellValue === null || cellValue === undefined)) ||
+        (cellValue &&
+          cellValue
+            .toString()
+            .toLowerCase()
+            .includes(machineSearchTerm.toLowerCase()))
       ) {
+        console.log("Added row to machine sheet:", row.values);
         machineSheet.addRow(row.values);
       } else {
+        console.log("Added row to parts sheet:", row.values);
         partsSheet.addRow(row.values);
       }
     });
