@@ -20,6 +20,10 @@ const machineSearchTerm = "新机";
 const trackingNum = "跟踪号";
 const orderNum = "发货单号";
 const quantity = "发货数量";
+const createTime = "创建时间";
+
+// columns to keep
+const retainColumns = [orderNum, trackingNum, "SKU1", machineColName, quantity, createTime];
 
 // route for file uploads and filtering
 uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
@@ -77,6 +81,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const sku4Index = colIndices["SKU4"];
     const trackingNumIndex = colIndices[trackingNum];
     const orderNumIndex = colIndices[orderNum];
+    const createTimeIndex = colIndices[createTime];
 
     if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
@@ -130,22 +135,23 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
             const newRow = {
               [orderNum]: row.getCell(orderNumIndex).value,
               [trackingNum]: row.getCell(trackingNumIndex).value,
-              [skuData.sku]: skuData.skuValue,
+              ["SKU1"]: skuData.skuValue,
               [machineColName]: row.getCell(currentItemIndex).value,
               [quantity]: row.getCell(currentQtyIndex).value,
+              [createTime]: row.getCell(createTimeIndex).value,
             };
 
             if (i === 0 && !skus.slice(1).some((sku) => sku.skuValue)) {
               // push whole row if only SKU1 has data
-              filteredRows.push(row.values);
+              filteredRows.push(retainColumns.map(col => newRow[col] || ""));
               console.log("Order has 1 item:", row.values);
             } else if (skuData.sku !== "SKU1") {
               // only push specific columns if SKU2/3/4 exist
-              filteredRows.push(Object.values(newRow));
+              filteredRows.push(retainColumns.map(col => newRow[col] || ""));
               console.log("SKU2+:", newRow)
             } else if (!addedOriginalRow) {
               // add original row w SKU1 if needed
-              filteredRows.push(row.values);
+              filteredRows.push(retainColumns.map(col => newRow[col] || ""));
               addedOriginalRow = true;
             }
           }
@@ -157,7 +163,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const ordersWorksheet = workbook.addWorksheet("Orders Today");
 
     // add header row
-    ordersWorksheet.addRow(headerRow.values);
+    ordersWorksheet.addRow(retainColumns);
 
     // add filtered rows
     filteredRows.forEach((row) => ordersWorksheet.addRow(row));
