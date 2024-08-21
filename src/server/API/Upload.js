@@ -18,6 +18,8 @@ const includeBlanks = true;
 const machineColName = "品名";
 const machineSearchTerm = "新机";
 const trackingNum = "跟踪号";
+const orderNum = "发货单号";
+const quantity = "发货数量";
 
 // route for file uploads and filtering
 uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
@@ -74,6 +76,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const sku3Index = colIndices["SKU3"];
     const sku4Index = colIndices["SKU4"];
     const trackingNumIndex = colIndices[trackingNum];
+    const orderNumIndex = colIndices[orderNum];
 
     if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
@@ -108,17 +111,45 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
           return;
         }
 
-        // dupe rows based on if there are SKU2+
-        const sku = row.getCell(skuIndex).value;
-        const sku2 = row.getCell(sku2Index).value;
-        const sku3 = row.getCell(sku3Index).value;
-        const sku4 = row.getCell(sku4Index).value;
+        // get rows with SKU2+
+        const skus = [
+          { sku: "SKU1", skuValue: row.getCell(skuIndex).value },
+          { sku: "SKU2", skuValue: row.getCell(sku2Index).value },
+          { sku: "SKU3", skuValue: row.getCell(sku3Index).value },
+          { sku: "SKU4", skuValue: row.getCell(sku4Index).value },
+        ];
 
-        const skuCount = [sku, sku2, sku3, sku4].filter((sku) => sku).length;
+        let addedOriginalRow = false;
 
-        for (let i = 0; i < skuCount; i++) {
-          filteredRows.push(row.values);
-        }
+        skus.forEach((skuData, i) => {
+          if (skuData.skuValue) {
+            const currentSKUIndex = colIndices[skuData.sku];
+            const currentItemIndex = currentSKUIndex + 1;
+            const currentQtyIndex = currentSKUIndex + 2;
+
+            const newRow = {
+              [orderNum]: row.getCell(orderNumIndex).value,
+              [trackingNum]: row.getCell(trackingNumIndex).value,
+              [skuData.sku]: skuData.skuValue,
+              [machineColName]: row.getCell(currentItemIndex).value,
+              [quantity]: row.getCell(currentQtyIndex).value,
+            };
+
+            if (i === 0 && !skus.slice(1).some((sku) => sku.skuValue)) {
+              // push whole row if only SKU1 has data
+              filteredRows.push(row.values);
+              console.log("Order has 1 item:", row.values);
+            } else if (skuData.sku !== "SKU1") {
+              // only push specific columns if SKU2/3/4 exist
+              filteredRows.push(Object.values(newRow));
+              console.log("SKU2+:", newRow)
+            } else if (!addedOriginalRow) {
+              // add original row w SKU1 if needed
+              filteredRows.push(row.values);
+              addedOriginalRow = true;
+            }
+          }
+        });
       }
     });
 
@@ -164,10 +195,10 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
           .toLowerCase()
           .includes(machineSearchTerm.toLowerCase())
       ) {
-        console.log("Added row to machine sheet:", row.values);
+        console.log("Added row to machine sheet:");
         machineSheet.addRow(row.values);
       } else {
-        console.log("Added row to parts sheet:", row.values);
+        console.log("Added row to parts sheet:");
         partsSheet.addRow(row.values);
       }
     });
