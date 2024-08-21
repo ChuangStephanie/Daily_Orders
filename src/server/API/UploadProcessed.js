@@ -30,6 +30,7 @@ processedRouter.post(
 
       // clear old processed orders
       processedOrders.clear();
+      console.log("Set cleared");
 
       // Find column index for 'processed'
       headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
