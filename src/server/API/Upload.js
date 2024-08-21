@@ -169,18 +169,13 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
 
     // create orders today sheet
     const ordersWorksheet = workbook.addWorksheet("Orders Today");
-
-    // add header row
     ordersWorksheet.addRow(retainColumns);
-
-    // add filtered rows
     filteredRows.forEach((row) => ordersWorksheet.addRow(row));
 
     // create machine and parts sheets
     const machineSheet = workbook.addWorksheet("Machine");
     const partsSheet = workbook.addWorksheet("Parts");
 
-    // copy header row to machine and parts sheets
     machineSheet.addRow(retainColumns);
     partsSheet.addRow(retainColumns);
 
