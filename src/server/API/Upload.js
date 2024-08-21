@@ -23,7 +23,15 @@ const quantity = "发货数量";
 const createTime = "创建时间";
 
 // columns to keep
-const retainColumns = [orderNum, trackingNum, "SKU1", machineColName, quantity, createTime];
+const retainColumns = [
+  orderNum,
+  trackingNum,
+  "SKU1",
+  "Category",
+  machineColName,
+  quantity,
+  createTime,
+];
 
 // route for file uploads and filtering
 uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
@@ -116,7 +124,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
           return;
         }
 
-        // get rows with SKU2+
+        // get SKU index
         const skus = [
           { sku: "SKU1", skuValue: row.getCell(skuIndex).value },
           { sku: "SKU2", skuValue: row.getCell(sku2Index).value },
@@ -143,15 +151,15 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
 
             if (i === 0 && !skus.slice(1).some((sku) => sku.skuValue)) {
               // push whole row if only SKU1 has data
-              filteredRows.push(retainColumns.map(col => newRow[col] || ""));
+              filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
               console.log("Order has 1 item:", row.values);
             } else if (skuData.sku !== "SKU1") {
               // only push specific columns if SKU2/3/4 exist
-              filteredRows.push(retainColumns.map(col => newRow[col] || ""));
-              console.log("SKU2+:", newRow)
+              filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
+              console.log("SKU2+:", newRow);
             } else if (!addedOriginalRow) {
               // add original row w SKU1 if needed
-              filteredRows.push(retainColumns.map(col => newRow[col] || ""));
+              filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
               addedOriginalRow = true;
             }
           }
@@ -173,8 +181,8 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const partsSheet = workbook.addWorksheet("Parts");
 
     // copy header row to machine and parts sheets
-    machineSheet.addRow(ordersWorksheet.getRow(1).values);
-    partsSheet.addRow(ordersWorksheet.getRow(1).values);
+    machineSheet.addRow(retainColumns);
+    partsSheet.addRow(retainColumns);
 
     // find column index for machine column
     let machineColIndex = -1;
@@ -188,23 +196,39 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
       return res.status(400).send("Machine column not found.");
     }
 
-    // filter rows for machine and parts sheets
+    // update category column to machine or part
+    const categoryColIndex = retainColumns.indexOf("Category") + 1;
+
     ordersWorksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       if (rowNumber === 1) return;
-      const cellValue = row.getCell(machineColIndex).value;
-      console.log("Cell Value:", cellValue);
+      const machineValue = row.getCell(machineColIndex).value;
+      console.log("Machine Value:", machineValue);
 
-      if (
-        cellValue &&
-        cellValue
+      const category =
+        machineValue &&
+        machineValue
           .toString()
           .toLowerCase()
           .includes(machineSearchTerm.toLowerCase())
-      ) {
-        console.log("Added row to machine sheet:");
+          ? "Machine"
+          : "Part";
+
+      row.getCell(categoryColIndex).value = category;
+      console.log(
+        `Row ${rowNumber}: Machine Value: ${machineValue}, Category: ${category}`
+      );
+    });
+
+    // filter rows for machine and parts sheets
+    ordersWorksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const category = row.getCell(categoryColIndex).value;
+
+      if (category === "Machine") {
+        console.log("Added to Machine Sheet");
         machineSheet.addRow(row.values);
       } else {
-        console.log("Added row to parts sheet:");
+        console.log("Added to Parts Sheet");
         partsSheet.addRow(row.values);
       }
     });
