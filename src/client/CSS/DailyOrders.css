@@ -1,0 +1,14 @@
+.daily-orders {
+    display: flex;
+    flex-direction: column;    
+}
+
+.file-uploads {
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+}
+
+.new, .processed {
+    margin: 10px;
+}

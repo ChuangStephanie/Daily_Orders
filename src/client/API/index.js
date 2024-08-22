@@ -46,14 +46,14 @@ export async function uploadFile(file) {
   }
 }
 
-export async function uploadProcessedFile(file) {
-  if (!file) {
+export async function uploadProcessedFile(processed) {
+  if (!processed) {
     alert("No file uploaded.");
     return;
   }
 
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", processed);
 
   try {
     const response = await fetch(`${baseURL}/upload-processed`, {
