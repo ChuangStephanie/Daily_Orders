@@ -1,14 +1,20 @@
 .daily-orders {
     display: flex;
-    flex-direction: column;    
+    flex-direction: column;
+    align-items: center; 
+}
+
+.title {
+    margin: 5px;
 }
 
 .file-uploads {
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     display: flex;
     flex-direction: column;
 }
 
-.new, .processed {
+.new, .processed, .submit {
     margin: 10px;
+    width: 220px;
 }

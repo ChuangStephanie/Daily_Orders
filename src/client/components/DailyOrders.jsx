@@ -45,9 +45,15 @@ export default function DailyOrders() {
     }
   };
 
-  const handleDrop = (e) => {};
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
-  const handleDragOver = (e) => {};
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,52 +79,67 @@ export default function DailyOrders() {
 
   return (
     <Box className="daily-orders">
-      <h1>Daily Orders</h1>
-      <Box
-        className="file-uploads"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        sx={{
-          border: "2px dashed #ccc",
-          borderRadius: 2,
-          padding: 2,
-          textAlign: "center",
-          position: "relative",
-          "&:hover": {
-            borderColor: "#888",
-          },
-        }}
-      >
-        <Button
-          className="new"
-          component="label"
-          variant="contained"
-          startIcon={<CloudUploadRounded />}
+      <h1 className="title">Daily Orders</h1>
+      <p>Drag and drop or select button to upload files</p>
+      <Box className="file-uploads">
+        <Box
+          sx={{
+            border: "2px dashed #ccc",
+            borderRadius: 2,
+            padding: 2,
+            margin: 1,
+            textAlign: "center",
+            position: "relative",
+            "&:hover": {
+              borderColor: "#888",
+            },
+          }}
         >
-          New Orders
-          <input
-            type="file"
-            name="upload-file"
-            hidden
-            onChange={handleFileChange}
-            accept=".xlsx"
-          />
-        </Button>
-        <Button
-          className="processed"
-          component="label"
-          variant="contained"
-          startIcon={<CloudUploadRounded />}
+          <Button
+            className="new"
+            component="label"
+            variant="contained"
+            startIcon={<CloudUploadRounded />}
+          >
+            New Orders
+            <input
+              type="file"
+              name="upload-file"
+              hidden
+              onChange={handleFileChange}
+              accept=".xlsx"
+            />
+          </Button>
+        </Box>
+        <Box
+          sx={{
+            border: "2px dashed #ccc",
+            borderRadius: 2,
+            padding: 2,
+            margin: 1,
+            textAlign: "center",
+            position: "relative",
+            "&:hover": {
+              borderColor: "#888",
+            },
+          }}
         >
-          Processed Sheet
-          <input
-            type="file"
-            name="processed-file"
-            hidden
-            onChange={handleFileChange}
-            accept=".xlsx"
-          />
-        </Button>
+          <Button
+            className="processed"
+            component="label"
+            variant="contained"
+            startIcon={<CloudUploadRounded />}
+          >
+            Processed Sheet
+            <input
+              type="file"
+              name="processed-file"
+              hidden
+              onChange={handleFileChange}
+              accept=".xlsx"
+            />
+          </Button>
+        </Box>
       </Box>
       <Button
         className="submit"
@@ -138,7 +159,8 @@ export default function DailyOrders() {
           "Submit"
         )}
       </Button>
-      <Snackbar 
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <Snackbar
         open={snackbarOpen}
         onClose={handleCloseSnackbar}
         TransitionComponent={SlideUp}
