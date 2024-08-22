@@ -244,7 +244,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     }
 
     // send new file
-    res.download(filteredFilePath, "AiperDropshipOrders.xlsx", (err) => {
+    res.download(filteredFilePath, "AiperDropshipOrderDetails.xlsx", (err) => {
       if (err) {
         console.log("Error sending file:", err);
         res.status(500).send("Failed to send file.");
