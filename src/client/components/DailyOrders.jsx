@@ -45,7 +45,7 @@ export default function DailyOrders() {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e, type) => {
     e.preventDefault();
     e.stopPropagation();
   };
@@ -83,6 +83,7 @@ export default function DailyOrders() {
       <p>Drag and drop or select button to upload files</p>
       <Box className="file-uploads">
         <Box
+          className="new-file"
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
@@ -112,6 +113,7 @@ export default function DailyOrders() {
           </Button>
         </Box>
         <Box
+          className="processed-file"
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
