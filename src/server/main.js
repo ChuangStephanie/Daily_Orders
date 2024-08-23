@@ -28,7 +28,7 @@ app.use("/api", processedRouter);
 app.use("/api", uploadRouter);
 
 // start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
