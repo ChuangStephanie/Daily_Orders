@@ -48,6 +48,19 @@ export default function DailyOrders() {
   const handleDrop = (e, type) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    if (file.name.endsWith(".xlsx")) {
+      if (type === "upload") {
+        setUpload(file);
+        showSnackbar("Today's file uploaded");
+      } else if (type === "processed") {
+        setProcessed(file);
+        showSnackbar("Processed file uploaded");
+      }
+    } else {
+      showSnackbar("Only excel files accepted");
+    }
   };
 
   const handleDragOver = (e) => {
@@ -84,6 +97,8 @@ export default function DailyOrders() {
       <Box className="file-uploads">
         <Box
           className="new-file"
+          onDrop={(e) => handleDrop(e, "upload")}
+          onDragOver={handleDrop}
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
@@ -114,6 +129,8 @@ export default function DailyOrders() {
         </Box>
         <Box
           className="processed-file"
+          onDrop={(e) => handleDrop(e, "processed")}
+          onDragOver={handleDrop}
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
