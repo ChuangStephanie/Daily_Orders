@@ -102,7 +102,7 @@ export default function DailyOrders() {
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
-            padding: 2,
+            padding: 4,
             margin: 1,
             textAlign: "center",
             position: "relative",
@@ -134,7 +134,7 @@ export default function DailyOrders() {
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
-            padding: 2,
+            padding: 4,
             margin: 1,
             textAlign: "center",
             position: "relative",

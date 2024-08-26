@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch; 
+    place-items: center;
 }
 
 .title {
@@ -12,9 +13,12 @@
     margin-bottom: 15px;
     display: flex;
     flex-direction: column;
+    min-width: 300px;
 }
 
-.new, .processed {
+.new, .processed, .submit {
     margin: 10px;
     width: 220px;
+    height: 40px;
 }
+
