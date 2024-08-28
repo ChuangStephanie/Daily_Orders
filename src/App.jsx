@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import "./App.css";
 import DailyOrders from "./client/components/DailyOrders";
 import Appbar from "./client/components/Appbar";
+import WIP from "./client/components/WIP";
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <Appbar />
       <Routes>
         <Route path="/" element={<DailyOrders />} />
+        <Route path="/wip" element={<WIP />} />
       </Routes>
     </>
   );

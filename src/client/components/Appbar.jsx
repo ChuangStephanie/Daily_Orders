@@ -6,9 +6,11 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Appbar() {
+  const navigate = useNavigate();
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ width: "100%" }}>
@@ -19,8 +21,8 @@ export default function Appbar() {
             </Link>
           </Typography>
           <Box sx={{ flexGrow: 1 }}></Box>
-          <Button color="inherit">WIP</Button>
-          <Button color="inherit">Daily Orders</Button>
+          <Button color="inherit" onClick={() => {navigate("/wip")}} >WIP</Button>
+          <Button color="inherit" onClick={() => {navigate("/")}} >Daily Orders</Button>
         </Toolbar>
       </AppBar>
     </Box>
