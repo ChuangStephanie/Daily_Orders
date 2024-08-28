@@ -21,8 +21,23 @@ export default function Appbar() {
             </Link>
           </Typography>
           <Box sx={{ flexGrow: 1 }}></Box>
-          <Button color="inherit" onClick={() => {navigate("/wip")}} >WIP</Button>
-          <Button color="inherit" onClick={() => {navigate("/")}} >Daily Orders</Button>
+          <Button
+            color="inherit"
+            onClick={() => {
+              navigate("/");
+            }}
+          >
+            Daily Orders
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => {
+              navigate("/wip");
+            }}
+          >
+            WIP
+          </Button>
+          <Button color="inherit" onClick={() => {navigate("work-orders")}} >Work Orders</Button>
         </Toolbar>
       </AppBar>
     </Box>

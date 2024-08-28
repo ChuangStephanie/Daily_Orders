@@ -4,6 +4,7 @@ import "./App.css";
 import DailyOrders from "./client/components/DailyOrders";
 import Appbar from "./client/components/Appbar";
 import WIP from "./client/components/WIP";
+import WorkOrders from "./client/components/WorkOrders";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<DailyOrders />} />
         <Route path="/wip" element={<WIP />} />
+        <Route path="/work-orders" element={<WorkOrders />} />
       </Routes>
     </>
   );
