@@ -9,8 +9,26 @@ import {
 import "../CSS/WIP.css";
 
 export default function WIP() {
-  let today = 0;
-  const handleSubmit = () => {};
+  const [todayWip, setTodayWip] = useState("");
+  const [yesterdayWip, setYesterdayWip] = useState("");
+  const [received, setReceived] = useState("");
+  const [fg, setFg] = useState("");
+  const [scrap, setScrap] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const calcWip =
+      (Number(yesterdayWip) || 0) +
+      (Number(received) || 0) -
+      ((Number(fg) || 0) + (Number(scrap) || 0));
+    setTodayWip(calcWip);
+  };
+
+  const handleNumberChange = (setter) => (e) => {
+    const value = e.target.value;
+    setter(value);
+  };
+
   return (
     <>
       <Box className="wip-count">
@@ -21,6 +39,9 @@ export default function WIP() {
               variant="filled"
               label="Yesterday's Wip"
               size="small"
+              type="number"
+              value={yesterdayWip}
+              onChange={handleNumberChange(setYesterdayWip)}
               InputLabelProps={{
                 sx: {
                   color: "gray",
@@ -39,6 +60,9 @@ export default function WIP() {
               variant="filled"
               label="Received"
               size="small"
+              type="number"
+              value={received}
+              onChange={handleNumberChange(setReceived)}
               InputLabelProps={{
                 sx: {
                   color: "gray",
@@ -57,6 +81,9 @@ export default function WIP() {
               variant="filled"
               label="FG"
               size="small"
+              type="number"
+              value={fg}
+              onChange={handleNumberChange(setFg)}
               InputLabelProps={{
                 sx: {
                   color: "gray",
@@ -75,6 +102,9 @@ export default function WIP() {
               variant="filled"
               label="Scrap"
               size="small"
+              type="number"
+              value={scrap}
+              onChange={handleNumberChange(setScrap)}
               InputLabelProps={{
                 sx: {
                   color: "gray",
@@ -90,9 +120,11 @@ export default function WIP() {
               }}
             ></TextField>
           </Box>
-          <Button variant="contained" type="submit" >Submit</Button>
+          <Button variant="contained" type="submit">
+            Submit
+          </Button>
         </Box>
-        <h3>WIP Today: {today}</h3>
+        <h3>WIP Today: {todayWip}</h3>
       </Box>
     </>
   );
