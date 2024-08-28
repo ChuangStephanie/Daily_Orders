@@ -9,7 +9,7 @@ import {
 import "../CSS/WIP.css";
 
 export default function WIP() {
-  const [todayWip, setTodayWip] = useState("");
+  const [todayWip, setTodayWip] = useState(0);
   const [yesterdayWip, setYesterdayWip] = useState("");
   const [received, setReceived] = useState("");
   const [fg, setFg] = useState("");
@@ -27,6 +27,13 @@ export default function WIP() {
   const handleNumberChange = (setter) => (e) => {
     const value = e.target.value;
     setter(value);
+  };
+
+  const handleReset = () => {
+    setYesterdayWip("");
+    setReceived("");
+    setFg("");
+    setScrap("");
   };
 
   return (
@@ -119,6 +126,9 @@ export default function WIP() {
                 },
               }}
             ></TextField>
+            <Button variant="outlined" size="small" onClick={handleReset}>
+              Reset All
+            </Button>
           </Box>
           <Button variant="contained" type="submit">
             Submit
