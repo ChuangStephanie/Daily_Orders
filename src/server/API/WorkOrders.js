@@ -100,22 +100,33 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
       let orderNumber;
 
-      if (model.includes("pro")) {
+      if (model.includes("Pro")) {
         orderNumber = `TSLPRO${formattedDate}${proOrders.length + 1}`;
+        // log order number
+        console.log("Order number:", orderNumber);
         proOrders.push(orderNumber);
-
-        proSheet.addRow({
-          [proOrderNumColIndex]: orderNumber,
-        });
-      } else if (model.includes("se")) {
+      } else if (model.includes("SE")) {
         orderNumber = `TSLSE${formattedDate}${seOrders.length + 1}`;
+        // log order number
+        console.log("Order number:", orderNumber);
         seOrders.push(orderNumber);
-
-        seSheet.addRow({
-          [seOrderNumColIndex]: orderNumber,
-        });
       }
     });
+
+    // add pro orders to pro sheet
+    proOrders.forEach((orderNumber, index) => {
+      const row = proSheet.getRow(index + 2);
+      row.getCell(proOrderNumColIndex).value = orderNumber;
+    });
+
+    // add se orders to se sheet
+    seOrders.forEach((orderNumber, index) => {
+      const row = seSheet.getRow(index + 2);
+      row.getCell(seOrderNumColIndex).value = orderNumber;
+    });
+
+    console.log("PRO Sheet Content:", proSheet.getSheetValues());
+    console.log("SE Sheet Content:", seSheet.getSheetValues());
 
     const date = new Date()
       .toLocaleDateString("en-US", {
