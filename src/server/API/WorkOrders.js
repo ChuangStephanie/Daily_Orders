@@ -9,6 +9,7 @@ const processedDir = path.join(__dirname, "..", "db", "processed");
 
 const upload = multer({ dest: uploadDir });
 const templatePath = path.join(__dirname, "db", "templates", "template.xlsx");
+console.log(`Template Path: ${templatePath}`)
 
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
@@ -40,6 +41,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const repairFile = req.files.find((file) =>
       file.originalname.includes("repair")
     );
+
+    console.log(`Files foumd: ${palletFile}, ${repairFile}`);
 
     const palletWorkbook = new ExcelJS.Workbook();
     await palletWorkbook.xlsx.readFile(palletFile.path);
