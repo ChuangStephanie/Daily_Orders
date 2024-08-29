@@ -17,6 +17,18 @@ const templatePath = path.join(
 );
 console.log(`Template Path: ${templatePath}`);
 
+// format date
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+  const month = `0${date.getMonth() + 1}`.slice(-2);
+  const day = `0${date.getDate()}`.slice(-2);
+  const year = date.getFullYear();
+  return `${month}${day}${year}`;
+};
+
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
     return res.status(400).send("No file uploaded.");
@@ -24,16 +36,22 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
   const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
 
-  const inputDate = req.body.date; // Retrieve the custom date
+  const inputDate = req.body.inputDate; // Retrieve the custom date
   const formattedDate = inputDate
-    ? inputDate
-    : new Date()
-        .toLocaleDateString("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "numeric",
-        })
-        .replace(/\//g, "");
+    ? formatDate(inputDate)
+    : formatDate(new Date());
+
+  if (!formattedDate) {
+    return res.status(400).send("Invalid date format.");
+  }
+
+  console.log("Formatted date:", formattedDate);
+
+  const finishDate = inputDate
+    ? new Date(inputDate).toLocaleDateString("en-US")
+    : new Date().toLocaleDateString("en-US");
+
+  console.log("Finish Date:", finishDate);
 
   try {
     const workbook = new ExcelJS.Workbook();
@@ -113,16 +131,30 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       }
     });
 
+    const location = "ASD-TSL-TX";
+    const type = "检测翻新";
+    const qty = 1;
+
     // add pro orders to pro sheet
     proOrders.forEach((orderNumber, index) => {
       const row = proSheet.getRow(index + 2);
       row.getCell(proOrderNumColIndex).value = orderNumber;
+      row.getCell(proOrderNumColIndex + 1).value = location;
+      row.getCell(proOrderNumColIndex + 3).value = type;
+      row.getCell(proOrderNumColIndex + 5).value = qty;
+      row.getCell(proOrderNumColIndex + 8).value = finishDate;
+      row.getCell(proOrderNumColIndex + 11).value = qty;
     });
 
     // add se orders to se sheet
     seOrders.forEach((orderNumber, index) => {
       const row = seSheet.getRow(index + 2);
       row.getCell(seOrderNumColIndex).value = orderNumber;
+      row.getCell(seOrderNumColIndex + 1).value = location;
+      row.getCell(seOrderNumColIndex + 3).value = type;
+      row.getCell(seOrderNumColIndex + 5).value = qty;
+      row.getCell(seOrderNumColIndex + 8).value = finishDate;
+      row.getCell(seOrderNumColIndex + 11).value = qty;
     });
 
     console.log("PRO Sheet Content:", proSheet.getSheetValues());
