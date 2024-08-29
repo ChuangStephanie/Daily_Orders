@@ -37,9 +37,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
 
   const inputDate = req.body.inputDate; // Retrieve the custom date
-  const formattedDate = inputDate
-    ? formatDate(inputDate)
-    : formatDate(new Date());
+  const formattedDate = formatDate(inputDate) || formatDate(new Date());
 
   if (!formattedDate) {
     return res.status(400).send("Invalid date format.");
@@ -141,7 +139,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       row.getCell(proOrderNumColIndex).value = orderNumber;
       row.getCell(proOrderNumColIndex + 1).value = location;
       row.getCell(proOrderNumColIndex + 3).value = type;
-      row.getCell(proOrderNumColIndex + 5).value = qty;
+      row.getCell(proOrderNumColIndex + 6).value = qty;
       row.getCell(proOrderNumColIndex + 8).value = finishDate;
       row.getCell(proOrderNumColIndex + 11).value = qty;
     });
@@ -152,7 +150,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       row.getCell(seOrderNumColIndex).value = orderNumber;
       row.getCell(seOrderNumColIndex + 1).value = location;
       row.getCell(seOrderNumColIndex + 3).value = type;
-      row.getCell(seOrderNumColIndex + 5).value = qty;
+      row.getCell(seOrderNumColIndex + 6).value = qty;
       row.getCell(seOrderNumColIndex + 8).value = finishDate;
       row.getCell(seOrderNumColIndex + 11).value = qty;
     });
