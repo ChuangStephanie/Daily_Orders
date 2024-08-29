@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const workRouter = express.Router();
 const uploadDir = path.join(__dirname, "..", "db", "uploads");
+const processedDir = path.join(__dirname, "..", "db", "processed");
 
 const upload = multer({ dest: uploadDir });
 const templatePath = path.join(__dirname, "db", "templates", "template.xlsx");
@@ -13,6 +14,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
     return res.status(400).send("No file uploaded.");
   }
+
+  const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
 
   const inputDate = req.body.date; // Retrieve the custom date
   const formattedDate = inputDate
@@ -104,17 +107,16 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       })
       .replace(/\//g, ".");
 
-    const tempFilePath = path.join(uploadDir, `Template ${date}.xlsx`);
-    await workbook.xlsx.writeFile(tempFilePath);
+    await workbook.xlsx.writeFile(filteredFilePath);
 
     // send file as download
-    res.download(tempFilePath, `Work Orders ${date}.xlsx`, (err) => {
+    res.download(filteredFilePath, `Work Orders ${date}.xlsx`, (err) => {
       if (err) {
         res.status(500).send(`Error downloading file: ${err.message}`);
       }
 
-      //vremove temp file
-      fs.unlink(tempFilePath, (unlinkErr) => {
+      // remove temp file
+      fs.unlink(filteredFilePath, (unlinkErr) => {
         if (unlinkErr) {
           console.error(`Failed to delete temp file: ${unlinkErr.message}`);
         }
