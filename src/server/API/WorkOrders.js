@@ -54,21 +54,76 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       sheet.name.includes("6002")
     );
 
+    const getColIndex = (sheet, headerName) => {
+      const headerRow = sheet.getRow(1);
+      let colIndex = -1;
+      headerRow.eachCell((cell, colNumber) => {
+        if (cell.value === headerName) {
+          colIndex = colNumber;
+        }
+      });
+      return colIndex;
+    };
+
+    const modelColIndex = getColIndex(palletSheet, "Model");
+    const snColIndex = getColIndex(palletSheet, "SN");
+    const proOrderNumColIndex = getColIndex(proSheet, "Order Number");
+    const seOrderNumColIndex = getColIndex(seSheet, "Order Number");
+
     const proOrders = [];
     const seOrders = [];
 
     palletSheet.eachRow((row, rowIndex) => {
       if (rowIndex === 1) return;
-      const model = row.getCell("Model").value;
-      const sn = row.getCell("SN").value;
+      const model = row.getCell(modelColIndex).value;
+      const sn = row.getCell(snColIndex).value;
 
       let orderNumber;
 
       if (model.includes("pro")) {
         orderNumber = `TSLPRO${formattedDate}${proOrders.length + 1}`;
         proOrders.push(orderNumber);
-        proSheet.addRow([orderNumber]);
+
+        proSheet.addRow({
+          [proOrderNumColIndex]: orderNumber,
+        });
+      } else if (model.includes("se")) {
+        orderNumber = `TSLSE${formattedDate}${seOrders.length + 1}`;
+        seOrders.push(orderNumber);
+
+        seSheet.addRow({
+          [seOrderNumColIndex]: orderNumber,
+        });
       }
     });
-  } catch (error) {}
+
+    const date = new Date()
+      .toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\//g, ".");
+
+    const tempFilePath = path.join(uploadDir, `Template ${date}.xlsx`);
+    await workbook.xlsx.writeFile(tempFilePath);
+
+    // send file as download
+    res.download(tempFilePath, `Work Orders ${date}.xlsx`, (err) => {
+      if (err) {
+        res.status(500).send(`Error downloading file: ${err.message}`);
+      }
+
+      //vremove temp file
+      fs.unlink(tempFilePath, (unlinkErr) => {
+        if (unlinkErr) {
+          console.error(`Failed to delete temp file: ${unlinkErr.message}`);
+        }
+      });
+    });
+    res.status(200).send("Files processed successfully.");
+  } catch (error) {
+    res.status(500).send(`Error processing files: ${error.message}`);
+  }
 });
+
+module.exports = workRouter;
