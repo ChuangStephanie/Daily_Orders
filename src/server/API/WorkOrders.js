@@ -8,8 +8,14 @@ const uploadDir = path.join(__dirname, "..", "db", "uploads");
 const processedDir = path.join(__dirname, "..", "db", "processed");
 
 const upload = multer({ dest: uploadDir });
-const templatePath = path.join(__dirname, "db", "templates", "template.xlsx");
-console.log(`Template Path: ${templatePath}`)
+const templatePath = path.join(
+  __dirname,
+  "..",
+  "db",
+  "templates",
+  "template.xlsx"
+);
+console.log(`Template Path: ${templatePath}`);
 
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
@@ -36,13 +42,13 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const seSheet = workbook.getWorksheet("SE");
 
     const palletFile = req.files.find((file) =>
-      file.originalname.includes("pallet")
+      file.originalname.includes("Pallet")
     );
     const repairFile = req.files.find((file) =>
-      file.originalname.includes("repair")
+      file.originalname.includes("Repair")
     );
 
-    console.log(`Files foumd: ${palletFile}, ${repairFile}`);
+    console.log(`Files found: ${palletFile}, ${repairFile}`);
 
     const palletWorkbook = new ExcelJS.Workbook();
     await palletWorkbook.xlsx.readFile(palletFile.path);
@@ -75,6 +81,14 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const snColIndex = getColIndex(palletSheet, "SN");
     const proOrderNumColIndex = getColIndex(proSheet, "Order Number");
     const seOrderNumColIndex = getColIndex(seSheet, "Order Number");
+
+    console.log(
+      "indices:",
+      modelColIndex,
+      snColIndex,
+      proOrderNumColIndex,
+      seOrderNumColIndex
+    );
 
     const proOrders = [];
     const seOrders = [];
@@ -125,9 +139,27 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         }
       });
     });
-    res.status(200).send("Files processed successfully.");
   } catch (error) {
     res.status(500).send(`Error processing files: ${error.message}`);
+  } finally {
+    // cleanup
+    fs.readdir(uploadDir, (err, files) => {
+      if (err) {
+        console.error(`Failed to read directory: ${err.message}`);
+        return;
+      }
+      files.forEach((file) => {
+        const filePath = path.join(uploadDir, file);
+        fs.unlink(filePath, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error(
+              `Failed to delete file ${filePath}: ${fs.unlinkErr.message}`
+            );
+          }
+          console.log("Temp files deleted.");
+        });
+      });
+    });
   }
 });
 
