@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const processedRouter = require("./API/UploadProcessed").router;
 const uploadRouter = require("./API/Upload");
+const workRouter = require("./API/WorkOrders")
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,7 @@ if (!fs.existsSync(processedDir)) {
 // Routes
 app.use("/api", processedRouter);
 app.use("/api", uploadRouter);
+app.use("/api", workRouter);
 
 // start server
 const PORT = process.env.PORT || 5050;
