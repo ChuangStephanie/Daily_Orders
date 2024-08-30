@@ -3,6 +3,7 @@ const ExcelJS = require("exceljs");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const { start } = require("repl");
 const workRouter = express.Router();
 const uploadDir = path.join(__dirname, "..", "db", "uploads");
 const processedDir = path.join(__dirname, "..", "db", "processed");
@@ -159,13 +160,13 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       if (model.includes("Pro")) {
         orderNumber = `TSLPRO${formattedDate}${proOrders.length + 1}`;
         // log order number
-        console.log("Order number:", orderNumber);
-        proOrders.push(orderNumber);
+        console.log("Order number:", orderNumber, "and start date:", startDate);
+        proOrders.push({ orderNumber, startDate });
       } else if (model.includes("SE")) {
         orderNumber = `TSLSE${formattedDate}${seOrders.length + 1}`;
         // log order number
-        console.log("Order number:", orderNumber);
-        seOrders.push(orderNumber);
+        console.log("Order number:", orderNumber, "and start date:", startDate);
+        seOrders.push({ orderNumber, startDate });
       }
     });
 
@@ -188,7 +189,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     });
 
     // add se orders to se sheet
-    seOrders.forEach((orderNumber, index) => {
+    seOrders.forEach(({ orderNumber, startDate }, index) => {
       const row = seSheet.getRow(index + 2);
       row.getCell(seOrderNumColIndex).value = orderNumber;
       row.getCell(seOrderNumColIndex + 1).value = location;
