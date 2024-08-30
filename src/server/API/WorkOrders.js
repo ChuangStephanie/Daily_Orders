@@ -142,14 +142,28 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       let orderNumber;
       let startDate = finishDate;
       let repairSheet = null;
+      let preRefurbSku = null;
+      
+      // Brand new SKU
+      const pro6001SKU = "AI00420711001";
+      const pro6002SKU = "AI00427111001";
+      const seGraySKU = "AI00419711001";
+      const seWhiteSKU = "AI00419811001";
 
-      // determine which repair sheet to check
+      // determine which repair sheet/SKU
       if (model.includes("6001")) {
         repairSheet = pro6001RepairSheet;
+        preRefurbSku = pro6001SKU;
       } else if (model.includes("6002")) {
         repairSheet = pro6002RepairSheet;
+        preRefurbSku = pro6002SKU;
       } else if (model.includes("SE")) {
         repairSheet = seRepairSheet;
+        if (model.includes("Gray")) {
+          preRefurbSku = seGraySKU;
+        } else {
+          preRefurbSku = seWhiteSKU;
+        }
       }
 
       // find start date
@@ -166,12 +180,12 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         orderNumber = `TSLPRO${formattedDate}${proOrders.length + 1}`;
         // log order number
         console.log("Order number:", orderNumber);
-        proOrders.push({ orderNumber, startDate, refurbSku });
+        proOrders.push({ orderNumber, startDate, preRefurbSku, refurbSku });
       } else if (model.includes("SE")) {
         orderNumber = `TSLSE${formattedDate}${seOrders.length + 1}`;
         // log order number
         console.log("Order number:", orderNumber);
-        seOrders.push({ orderNumber, startDate, refurbSku });
+        seOrders.push({ orderNumber, startDate, preRefurbSku, refurbSku });
       }
     });
 
@@ -180,13 +194,14 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const qty = 1;
 
     // add pro orders to pro sheet
-    proOrders.forEach(({ orderNumber, startDate, refurbSku }, index) => {
+    proOrders.forEach(({ orderNumber, startDate, preRefurbSku, refurbSku }, index) => {
       const row = proSheet.getRow(index + 2);
       row.getCell(proOrderNumColIndex).value = orderNumber;
       row.getCell(proOrderNumColIndex + 1).value = location;
       row.getCell(proOrderNumColIndex + 1).style = redFont;
       row.getCell(proOrderNumColIndex + 3).value = type;
       row.getCell(proOrderNumColIndex + 3).style = redFont;
+      row.getCell(proOrderNumColIndex + 4).value = preRefurbSku;
       row.getCell(proOrderNumColIndex + 6).value = qty;
       row.getCell(proOrderNumColIndex + 7).value = startDate;
       row.getCell(proOrderNumColIndex + 8).value = finishDate;
@@ -195,13 +210,14 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     });
 
     // add se orders to se sheet
-    seOrders.forEach(({ orderNumber, startDate, refurbSku }, index) => {
+    seOrders.forEach(({ orderNumber, startDate, preRefurbSku, refurbSku }, index) => {
       const row = seSheet.getRow(index + 2);
       row.getCell(seOrderNumColIndex).value = orderNumber;
       row.getCell(seOrderNumColIndex + 1).value = location;
       row.getCell(seOrderNumColIndex + 1).style = redFont;
       row.getCell(seOrderNumColIndex + 3).value = type;
       row.getCell(seOrderNumColIndex + 3).style = redFont;
+      row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
       row.getCell(seOrderNumColIndex + 6).value = qty;
       row.getCell(seOrderNumColIndex + 7).value = startDate;
       row.getCell(seOrderNumColIndex + 8).value = finishDate;
