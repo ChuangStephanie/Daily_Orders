@@ -17,6 +17,13 @@ const templatePath = path.join(
 );
 console.log(`Template Path: ${templatePath}`);
 
+// red font
+const redFont = {
+  font: {
+    color: { argb: "FFFF0000" },
+  },
+};
+
 // format date
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -138,7 +145,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const row = proSheet.getRow(index + 2);
       row.getCell(proOrderNumColIndex).value = orderNumber;
       row.getCell(proOrderNumColIndex + 1).value = location;
+      row.getCell(proOrderNumColIndex + 1).style = redFont;
       row.getCell(proOrderNumColIndex + 3).value = type;
+      row.getCell(proOrderNumColIndex + 3).style = redFont;
       row.getCell(proOrderNumColIndex + 6).value = qty;
       row.getCell(proOrderNumColIndex + 8).value = finishDate;
       row.getCell(proOrderNumColIndex + 11).value = qty;
@@ -149,7 +158,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const row = seSheet.getRow(index + 2);
       row.getCell(seOrderNumColIndex).value = orderNumber;
       row.getCell(seOrderNumColIndex + 1).value = location;
+      row.getCell(seOrderNumColIndex + 1).style = redFont;
       row.getCell(seOrderNumColIndex + 3).value = type;
+      row.getCell(seOrderNumColIndex + 3).style = redFont;
       row.getCell(seOrderNumColIndex + 6).value = qty;
       row.getCell(seOrderNumColIndex + 8).value = finishDate;
       row.getCell(seOrderNumColIndex + 11).value = qty;
