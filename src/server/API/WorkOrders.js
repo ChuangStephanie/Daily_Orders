@@ -101,8 +101,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       return colIndex;
     };
 
-    const modelColIndex = getColIndex(palletSheet, "Model");
+    const modelColIndex = getColIndex(palletSheet, "Model Color");
     const snColIndex = getColIndex(palletSheet, "SN");
+    const refurbSkuIndex = getColIndex(palletSheet, "SKU");
     const proOrderNumColIndex = getColIndex(proSheet, "Order Number");
     const seOrderNumColIndex = getColIndex(seSheet, "Order Number");
 
@@ -136,6 +137,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       if (rowIndex === 1) return;
       const model = row.getCell(modelColIndex).value;
       const sn = row.getCell(snColIndex).value;
+      const refurbSku = row.getCell(refurbSkuIndex).value;
+      console.log("Refurb SKU:", refurbSku);
       let orderNumber;
       let startDate = finishDate;
       let repairSheet = null;
@@ -149,6 +152,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         repairSheet = seRepairSheet;
       }
 
+      // find start date
       if (repairSheet) {
         const matchedDate = findMatchingSN(sn, repairSheet);
         if (matchedDate) {
@@ -157,16 +161,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         }
       }
 
+      // generate order number
       if (model.includes("Pro")) {
         orderNumber = `TSLPRO${formattedDate}${proOrders.length + 1}`;
         // log order number
-        console.log("Order number:", orderNumber, "and start date:", startDate);
-        proOrders.push({ orderNumber, startDate });
+        console.log("Order number:", orderNumber);
+        proOrders.push({ orderNumber, startDate, refurbSku });
       } else if (model.includes("SE")) {
         orderNumber = `TSLSE${formattedDate}${seOrders.length + 1}`;
         // log order number
-        console.log("Order number:", orderNumber, "and start date:", startDate);
-        seOrders.push({ orderNumber, startDate });
+        console.log("Order number:", orderNumber);
+        seOrders.push({ orderNumber, startDate, refurbSku });
       }
     });
 
@@ -175,7 +180,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const qty = 1;
 
     // add pro orders to pro sheet
-    proOrders.forEach(({ orderNumber, startDate }, index) => {
+    proOrders.forEach(({ orderNumber, startDate, refurbSku }, index) => {
       const row = proSheet.getRow(index + 2);
       row.getCell(proOrderNumColIndex).value = orderNumber;
       row.getCell(proOrderNumColIndex + 1).value = location;
@@ -185,11 +190,12 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       row.getCell(proOrderNumColIndex + 6).value = qty;
       row.getCell(proOrderNumColIndex + 7).value = startDate;
       row.getCell(proOrderNumColIndex + 8).value = finishDate;
+      row.getCell(proOrderNumColIndex + 10).value = refurbSku;
       row.getCell(proOrderNumColIndex + 11).value = qty;
     });
 
     // add se orders to se sheet
-    seOrders.forEach(({ orderNumber, startDate }, index) => {
+    seOrders.forEach(({ orderNumber, startDate, refurbSku }, index) => {
       const row = seSheet.getRow(index + 2);
       row.getCell(seOrderNumColIndex).value = orderNumber;
       row.getCell(seOrderNumColIndex + 1).value = location;
@@ -199,6 +205,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       row.getCell(seOrderNumColIndex + 6).value = qty;
       row.getCell(seOrderNumColIndex + 7).value = startDate;
       row.getCell(seOrderNumColIndex + 8).value = finishDate;
+      row.getCell(seOrderNumColIndex + 10).value = refurbSku;
       row.getCell(seOrderNumColIndex + 11).value = qty;
     });
 
