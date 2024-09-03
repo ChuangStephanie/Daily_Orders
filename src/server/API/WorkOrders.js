@@ -128,30 +128,16 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       seOrderNumColIndex
     );
 
-    const findStartDate = (sn, repairSheet) => {
+    // find values with in rows w matching SN
+    const findMatchingSN = (sn, repairSheet, header) => {
       const snColIndex = getColIndex(repairSheet, "S/N");
-      const dateColIndex = getColIndex(repairSheet, "Date");
-      console.log(snColIndex, dateColIndex);
+      const headerColIndex = getColIndex(repairSheet, header);
 
       for (let i = 4; i <= repairSheet.rowCount; i++) {
         const repairRow = repairSheet.getRow(i);
         const repairSN = repairRow.getCell(snColIndex).value;
         if (repairSN === sn) {
-          return repairRow.getCell(dateColIndex).value;
-        }
-      }
-      return null;
-    };
-
-    const findErrorCode = (sn, repairSheet) => {
-      const snColIndex = getColIndex(repairSheet, "S/N");
-      const errorColIndex = getColIndex(repairSheet, "Problem");
-
-      for (let i = 4; i <= repairSheet.rowCount; i++) {
-        const repairRow = repairSheet.getRow(i);
-        const repairSN = repairRow.getCell(snColIndex).value;
-        if (repairSN === sn) {
-          return repairRow.getCell(errorColIndex).value;
+          return repairRow.getCell(headerColIndex).value;
         }
       }
       return null;
@@ -196,12 +182,12 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
       // find start date and error code
       if (repairSheet) {
-        const matchedDate = findStartDate(sn, repairSheet);
+        const matchedDate = findMatchingSN(sn, repairSheet, "Date");
         if (matchedDate) {
           startDate = new Date(matchedDate).toLocaleDateString("en-US");
           console.log("Start Date:", startDate);
         }
-        const matchedError = findErrorCode(sn, repairSheet);
+        const matchedError = findMatchingSN(sn, repairSheet, "Problem");
         if (matchedError) {
           errorCode = matchedError;
           console.log("Error Code:", errorCode);
