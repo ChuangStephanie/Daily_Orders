@@ -101,6 +101,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       return colIndex;
     };
 
+    const getPartIndex = (sheet, headerName) => {
+      const headerRow = sheet.getRow(2);
+      let partColIndex = -1;
+      headerRow.eachCell((cell, colNumber) => {
+        if (cell.value === headerName) {
+          partColIndex = colNumber;
+        }
+      });
+      return partColIndex;
+    }
+
     const modelColIndex = getColIndex(palletSheet, "Model Color");
     const snColIndex = getColIndex(palletSheet, "SN");
     const refurbSkuIndex = getColIndex(palletSheet, "SKU");
@@ -206,7 +217,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       row.getCell(proOrderNumColIndex + 7).value = startDate;
       row.getCell(proOrderNumColIndex + 8).value = finishDate;
       row.getCell(proOrderNumColIndex + 10).value = refurbSku;
-      row.getCell(proOrderNumColIndex + 11).value = qty;
+      row.getCell(proOrderNumColIndex + 12).value = qty;
     });
 
     // add se orders to se sheet
@@ -222,7 +233,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       row.getCell(seOrderNumColIndex + 7).value = startDate;
       row.getCell(seOrderNumColIndex + 8).value = finishDate;
       row.getCell(seOrderNumColIndex + 10).value = refurbSku;
-      row.getCell(seOrderNumColIndex + 11).value = qty;
+      row.getCell(seOrderNumColIndex + 12).value = qty;
     });
 
     console.log("PRO Sheet Content:", proSheet.getSheetValues());
