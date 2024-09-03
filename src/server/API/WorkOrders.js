@@ -90,14 +90,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     );
 
     const getColIndex = (sheet, headerName) => {
-      const headerRow = sheet.getRow(1);
-      let colIndex = -1;
-      headerRow.eachCell((cell, colNumber) => {
-        if (cell.value === headerName) {
-          colIndex = colNumber;
-        }
-      });
-      return colIndex;
+      for (let i = 1; i <= 3; i++) {
+        const headerRow = sheet.getRow(i);
+        let colIndex = -1;
+        headerRow.eachCell((cell, colNumber) => {
+          if (cell.value === headerName) {
+            colIndex = colNumber;
+          }
+        });
+        if (colIndex !== -1) return colIndex;
+      }
+      return -1;
     };
 
     const getPartIndex = (sheet, headerName) => {
@@ -109,7 +112,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         }
       });
       return partColIndex;
-    }
+    };
 
     const modelColIndex = getColIndex(palletSheet, "Model Color");
     const snColIndex = getColIndex(palletSheet, "SN");
@@ -130,11 +133,25 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const dateColIndex = getColIndex(repairSheet, "Date");
       console.log(snColIndex, dateColIndex);
 
-      for (let i = 2; i <= repairSheet.rowCount; i++) {
+      for (let i = 4; i <= repairSheet.rowCount; i++) {
         const repairRow = repairSheet.getRow(i);
         const repairSN = repairRow.getCell(snColIndex).value;
         if (repairSN === sn) {
           return repairRow.getCell(dateColIndex).value;
+        }
+      }
+      return null;
+    };
+
+    const findErrorCode = (sn, repairSheet) => {
+      const snColIndex = getColIndex(repairSheet, "S/N");
+      const errorColIndex = getColIndex(repairSheet, "Problem");
+
+      for (let i = 4; i <= repairSheet.rowCount; i++) {
+        const repairRow = repairSheet.getRow(i);
+        const repairSN = repairRow.getCell(snColIndex).value;
+        if (repairSN === sn) {
+          return repairRow.getCell(errorColIndex).value;
         }
       }
       return null;
@@ -151,9 +168,10 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       console.log("Refurb SKU:", refurbSku);
       let orderNumber;
       let startDate = finishDate;
+      let errorCode = null;
       let repairSheet = null;
       let preRefurbSku = null;
-      
+
       // Brand new SKU
       const pro6001SKU = "AI00420711001";
       const pro6002SKU = "AI00427111001";
@@ -176,12 +194,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         }
       }
 
-      // find start date
+      // find start date and error code
       if (repairSheet) {
         const matchedDate = findStartDate(sn, repairSheet);
         if (matchedDate) {
           startDate = new Date(matchedDate).toLocaleDateString("en-US");
           console.log("Start Date:", startDate);
+        }
+        const matchedError = findErrorCode(sn, repairSheet);
+        if (matchedError) {
+          errorCode = matchedError;
+          console.log("Error Code:", errorCode);
         }
       }
 
@@ -190,12 +213,24 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         orderNumber = `TSLPRO${formattedDate}${proOrders.length + 1}`;
         // log order number
         console.log("Order number:", orderNumber);
-        proOrders.push({ orderNumber, startDate, preRefurbSku, refurbSku });
+        proOrders.push({
+          orderNumber,
+          startDate,
+          preRefurbSku,
+          refurbSku,
+          errorCode,
+        });
       } else if (model.includes("SE")) {
         orderNumber = `TSLSE${formattedDate}${seOrders.length + 1}`;
         // log order number
         console.log("Order number:", orderNumber);
-        seOrders.push({ orderNumber, startDate, preRefurbSku, refurbSku });
+        seOrders.push({
+          orderNumber,
+          startDate,
+          preRefurbSku,
+          refurbSku,
+          errorCode,
+        });
       }
     });
 
@@ -204,36 +239,48 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const qty = 1;
 
     // add pro orders to pro sheet
-    proOrders.forEach(({ orderNumber, startDate, preRefurbSku, refurbSku }, index) => {
-      const row = proSheet.getRow(index + 2);
-      row.getCell(proOrderNumColIndex).value = orderNumber;
-      row.getCell(proOrderNumColIndex + 1).value = location;
-      row.getCell(proOrderNumColIndex + 1).style = redFont;
-      row.getCell(proOrderNumColIndex + 3).value = type;
-      row.getCell(proOrderNumColIndex + 3).style = redFont;
-      row.getCell(proOrderNumColIndex + 4).value = preRefurbSku;
-      row.getCell(proOrderNumColIndex + 6).value = qty;
-      row.getCell(proOrderNumColIndex + 7).value = startDate;
-      row.getCell(proOrderNumColIndex + 8).value = finishDate;
-      row.getCell(proOrderNumColIndex + 10).value = refurbSku;
-      row.getCell(proOrderNumColIndex + 12).value = qty;
-    });
+    proOrders.forEach(
+      (
+        { orderNumber, startDate, preRefurbSku, refurbSku, errorCode },
+        index
+      ) => {
+        const row = proSheet.getRow(index + 2);
+        row.getCell(proOrderNumColIndex).value = orderNumber;
+        row.getCell(proOrderNumColIndex + 1).value = location;
+        row.getCell(proOrderNumColIndex + 1).style = redFont;
+        row.getCell(proOrderNumColIndex + 3).value = type;
+        row.getCell(proOrderNumColIndex + 3).style = redFont;
+        row.getCell(proOrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(proOrderNumColIndex + 6).value = qty;
+        row.getCell(proOrderNumColIndex + 7).value = startDate;
+        row.getCell(proOrderNumColIndex + 8).value = finishDate;
+        row.getCell(proOrderNumColIndex + 9).value = errorCode;
+        row.getCell(proOrderNumColIndex + 10).value = refurbSku;
+        row.getCell(proOrderNumColIndex + 12).value = qty;
+      }
+    );
 
     // add se orders to se sheet
-    seOrders.forEach(({ orderNumber, startDate, preRefurbSku, refurbSku }, index) => {
-      const row = seSheet.getRow(index + 2);
-      row.getCell(seOrderNumColIndex).value = orderNumber;
-      row.getCell(seOrderNumColIndex + 1).value = location;
-      row.getCell(seOrderNumColIndex + 1).style = redFont;
-      row.getCell(seOrderNumColIndex + 3).value = type;
-      row.getCell(seOrderNumColIndex + 3).style = redFont;
-      row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
-      row.getCell(seOrderNumColIndex + 6).value = qty;
-      row.getCell(seOrderNumColIndex + 7).value = startDate;
-      row.getCell(seOrderNumColIndex + 8).value = finishDate;
-      row.getCell(seOrderNumColIndex + 10).value = refurbSku;
-      row.getCell(seOrderNumColIndex + 12).value = qty;
-    });
+    seOrders.forEach(
+      (
+        { orderNumber, startDate, preRefurbSku, refurbSku, errorCode },
+        index
+      ) => {
+        const row = seSheet.getRow(index + 2);
+        row.getCell(seOrderNumColIndex).value = orderNumber;
+        row.getCell(seOrderNumColIndex + 1).value = location;
+        row.getCell(seOrderNumColIndex + 1).style = redFont;
+        row.getCell(seOrderNumColIndex + 3).value = type;
+        row.getCell(seOrderNumColIndex + 3).style = redFont;
+        row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(seOrderNumColIndex + 6).value = qty;
+        row.getCell(seOrderNumColIndex + 7).value = startDate;
+        row.getCell(seOrderNumColIndex + 8).value = finishDate;
+        row.getCell(seOrderNumColIndex + 9).value = errorCode;
+        row.getCell(seOrderNumColIndex + 10).value = refurbSku;
+        row.getCell(seOrderNumColIndex + 12).value = qty;
+      }
+    );
 
     console.log("PRO Sheet Content:", proSheet.getSheetValues());
     console.log("SE Sheet Content:", seSheet.getSheetValues());
