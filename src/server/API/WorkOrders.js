@@ -125,7 +125,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       seOrderNumColIndex
     );
 
-    const findMatchingSN = (sn, repairSheet) => {
+    const findStartDate = (sn, repairSheet) => {
       const snColIndex = getColIndex(repairSheet, "S/N");
       const dateColIndex = getColIndex(repairSheet, "Date");
       console.log(snColIndex, dateColIndex);
@@ -178,7 +178,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
       // find start date
       if (repairSheet) {
-        const matchedDate = findMatchingSN(sn, repairSheet);
+        const matchedDate = findStartDate(sn, repairSheet);
         if (matchedDate) {
           startDate = new Date(matchedDate).toLocaleDateString("en-US");
           console.log("Start Date:", startDate);
