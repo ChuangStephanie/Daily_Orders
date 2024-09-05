@@ -135,8 +135,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     // reformat data
     const cleanData = (value) => {
       if (value != null) {
-        return value.toString().trim();
+        return value.toString().trim().toLowerCase();
       }
+      return "";
     };
 
     const insertRepairData = (sn, repairSheet, templateSheet, rowIndex) => {
@@ -154,15 +155,29 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             );
             console.log("Header:", header);
 
+            const templateHeaderRow = templateSheet.getRow(1);
+            templateHeaderRow.eachCell((cell, colNumber) => {
+              const templateHeader = cleanData(cell.value);
+              console.log(`Template Header: ${templateHeader}`);
+            })
+
             // find matching header/column
-            const templateColIndex = getColIndex(templateSheet, header);
-            console.log("Template Column Index", templateColIndex);
+            let templateColIndex = -1;
+            templateHeaderRow.eachCell((cell, colNumber) => {
+              const templateHeader = cleanData(cell.value);
+              if (templateHeader === header) {
+                templateColIndex = colNumber;
+                console.log(`Found matching header: ${templateHeader}`);
+              }
+            });
 
             if (templateColIndex !== -1) {
               const templateRow = templateSheet.getRow(rowIndex);
               templateRow.getCell(templateColIndex + 1).value = cell.value;
-              console.log("Template Header:", templateRow.getCell(templateColIndex).value);
-              console.log("Cell value inserted:", cell.value);
+              const templateHeader = templateSheet
+                .getRow(1)
+                .getCell(templateColIndex).value;
+              console.log(`${cell.value} inserted under ${templateHeader}`);
             }
           });
           break;
