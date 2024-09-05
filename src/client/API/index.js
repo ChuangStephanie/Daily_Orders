@@ -72,3 +72,50 @@ export async function uploadProcessedFile(processed) {
     throw error;
   }
 }
+
+export async function processWorkOrders(files) {
+  if (!files || files.length <= 1) {
+    alert("No files uploaded.");
+    return;
+  }
+
+  const formData = new FormData();
+  files.forEach((file, index) => {
+    formData.append(`file${index}`, file);
+  });
+
+  try {
+    const response = await fetch(`${baseURL}/work-orders`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to process work orders: ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+
+    const date = new Date()
+    .toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+    })
+    .replace(/\//g, ".");
+    const fileName = `Work Orders ${date}.xlsx`;
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+
+    //cleanup after download
+    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+
+  } catch (error) {
+    console.error(`Error processing work orders: ${error}`);
+    throw error;
+  }
+
+};
