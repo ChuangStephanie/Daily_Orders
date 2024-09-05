@@ -168,11 +168,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
             if (templateColIndex !== -1) {
               const templateRow = templateSheet.getRow(rowIndex);
+              const partSku = repairSheet.getRow(3).getCell(colNumber).value;
+
+              // insert part SKU
+              templateRow.getCell(templateColIndex).value = partSku;
+              
+              // insert qty of part
               templateRow.getCell(templateColIndex + 1).value = cell.value;
               const templateHeader = templateSheet
                 .getRow(1)
                 .getCell(templateColIndex).value;
-              console.log(`${cell.value} inserted under ${templateHeader}`);
+              console.log(`Qty: ${cell.value} and Part SKU: ${partSku} inserted under ${templateHeader}`);
             }
           });
           break;
