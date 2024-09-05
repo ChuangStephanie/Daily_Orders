@@ -103,17 +103,6 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       return -1;
     };
 
-    const getPartIndex = (sheet, headerName) => {
-      const headerRow = sheet.getRow(2);
-      let partColIndex = -1;
-      headerRow.eachCell((cell, colNumber) => {
-        if (cell.value === headerName) {
-          partColIndex = colNumber;
-        }
-      });
-      return partColIndex;
-    };
-
     const modelColIndex = getColIndex(palletSheet, "Model Color");
     const snColIndex = getColIndex(palletSheet, "SN");
     const refurbSkuIndex = getColIndex(palletSheet, "SKU");
@@ -143,8 +132,48 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       return null;
     };
 
+    // reformat data
+    const cleanData = (value) => {
+      if (value != null) {
+        return value.toString().trim();
+      }
+    };
+
+    const insertRepairData = (sn, repairSheet, templateSheet, rowIndex) => {
+      const snColIndex = getColIndex(repairSheet, "S/N");
+
+      for (let i = 4; i <= repairSheet.rowCount; i++) {
+        const repairRow = repairSheet.getRow(i);
+        const repairSN = repairRow.getCell(snColIndex).value;
+
+        // process row if SN matches
+        if (repairSN === sn) {
+          repairRow.eachCell((cell, colNumber) => {
+            const header = cleanData(
+              repairSheet.getRow(2).getCell(colNumber).value
+            );
+            console.log("Header:", header);
+
+            // find matching header/column
+            const templateColIndex = getColIndex(templateSheet, header);
+            console.log("Template Column Index", templateColIndex);
+
+            if (templateColIndex !== -1) {
+              const templateRow = templateSheet.getRow(rowIndex);
+              templateRow.getCell(templateColIndex + 1).value = cell.value;
+              console.log("Template Header:", templateRow.getCell(templateColIndex).value);
+              console.log("Cell value inserted:", cell.value);
+            }
+          });
+          break;
+        }
+      }
+    };
+
     const proOrders = [];
     const seOrders = [];
+    let proRow = 2;
+    let seRow = 2;
 
     palletSheet.eachRow((row, rowIndex) => {
       if (rowIndex === 1) return;
@@ -191,6 +220,15 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         if (matchedError) {
           errorCode = matchedError;
           console.log("Error Code:", errorCode);
+        }
+        if (model.includes("Pro")) {
+          insertRepairData(sn, repairSheet, proSheet, proRow);
+          proRow++;
+          console.log("Pro row count:", proRow);
+        } else if (model.includes("SE")) {
+          insertRepairData(sn, repairSheet, seSheet, seRow);
+          seRow++;
+          console.log("SE row count:", seRow);
         }
       }
 
@@ -268,8 +306,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       }
     );
 
-    console.log("PRO Sheet Content:", proSheet.getSheetValues());
-    console.log("SE Sheet Content:", seSheet.getSheetValues());
+    // console.log("PRO Sheet Content:", proSheet.getSheetValues());
+    // console.log("SE Sheet Content:", seSheet.getSheetValues());
 
     const date = new Date()
       .toLocaleDateString("en-US", {
@@ -307,7 +345,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         fs.unlink(filePath, (unlinkErr) => {
           if (unlinkErr) {
             console.error(
-              `Failed to delete file ${filePath}: ${fs.unlinkErr.message}`
+              `Failed to delete file ${filePath}: ${unlinkErr.message}`
             );
           }
           console.log("Temp files deleted.");
