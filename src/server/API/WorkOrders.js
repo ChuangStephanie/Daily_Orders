@@ -153,16 +153,11 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const header = cleanData(
               repairSheet.getRow(2).getCell(colNumber).value
             );
-            console.log("Header:", header);
-
-            const templateHeaderRow = templateSheet.getRow(1);
-            templateHeaderRow.eachCell((cell, colNumber) => {
-              const templateHeader = cleanData(cell.value);
-              console.log(`Template Header: ${templateHeader}`);
-            })
-
+            console.log("Header:", header);            
+            
             // find matching header/column
             let templateColIndex = -1;
+            const templateHeaderRow = templateSheet.getRow(1);
             templateHeaderRow.eachCell((cell, colNumber) => {
               const templateHeader = cleanData(cell.value);
               if (templateHeader === header) {
