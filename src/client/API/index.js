@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-export const baseURL = "https://daily-orders.onrender.com";
+export const baseURL = "https://daily-orders.onrender.com/api";
 
 export async function uploadFile(file) {
   if (!file) {
