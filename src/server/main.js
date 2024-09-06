@@ -10,7 +10,7 @@ const app = express();
 
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = ["https://daily-orders.netlify.app/"];
+    const allowedOrigins = ["https://daily-orders.netlify.app"];
     if (allowedOrigins.includes(origin) || !origin) {
       callback(null, true);
     } else {
