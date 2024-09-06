@@ -75,14 +75,15 @@ export async function uploadProcessedFile(processed) {
 
 export async function processWorkOrders(files) {
   if (!files || files.length <= 1) {
-    alert("No files uploaded.");
+    alert("Upload required files.");
     return;
   }
 
   const formData = new FormData();
-  files.forEach((file, index) => {
-    formData.append(`file${index}`, file);
-  });
+
+  files.forEach((file) => {
+    formData.append("files", file);
+  })
 
   try {
     const response = await fetch(`${baseURL}/work-orders`, {
