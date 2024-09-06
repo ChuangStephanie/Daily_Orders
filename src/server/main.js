@@ -4,10 +4,14 @@ const fs = require("fs");
 const path = require("path");
 const processedRouter = require("./API/UploadProcessed").router;
 const uploadRouter = require("./API/Upload");
-const workRouter = require("./API/WorkOrders")
+const workRouter = require("./API/WorkOrders");
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://daily-orders.netlify.app/",
+  })
+);
 app.use(express.json());
 
 app.get("/", (req, res) => {
