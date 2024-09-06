@@ -32,12 +32,19 @@ export default function Appbar() {
           <Button
             color="inherit"
             onClick={() => {
+              navigate("work-orders");
+            }}
+          >
+            Work Orders
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => {
               navigate("/wip");
             }}
           >
             WIP
           </Button>
-          <Button color="inherit" onClick={() => {navigate("work-orders")}} >Work Orders</Button>
         </Toolbar>
       </AppBar>
     </Box>
