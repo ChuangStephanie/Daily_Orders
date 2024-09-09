@@ -296,15 +296,15 @@ export default function WorkOrders() {
                     ) : null}
                   </Box>
                 ))}
-                <Button
-                  className="add"
-                  variant="contained"
-                  size="small"
-                  onClick={addFormFields}
-                >
-                  Add
-                </Button>
               </Box>
+              <Button
+                className="add"
+                variant="contained"
+                size="small"
+                onClick={addFormFields}
+              >
+                Add
+              </Button>
             </Box>
           </Box>
           <Button
