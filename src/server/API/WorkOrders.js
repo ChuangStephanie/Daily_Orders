@@ -36,12 +36,38 @@ const formatDate = (dateString) => {
   return `${month}${day}${year}`;
 };
 
+const continueOrdernum = (sheet, orderNumColIndex) => {
+  let lastOrderNum = "";
+  sheet.eachRow({ includeEmpty: true }, (row, rowIndex) => {
+    if (rowIndex === 1) return;
+    const orderNum = row.getCell(orderNumColIndex).value;
+    if (orderNum) {
+      lastOrderNum = orderNum;
+    }
+  });
+  return lastOrderNum;
+};
+
+const location = "ASD-TSL-TX";
+const refurb = "检测翻新";
+const scrap = "仅检测";
+const qty = 1;
+
+// Brand new SKU
+const pro6001SKU = "AI00420711001";
+const pro6002SKU = "AI00427111001";
+const seGraySKU = "AI00419711001";
+const seWhiteSKU = "AI00419811001";
+
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
     return res.status(400).send("No file uploaded.");
   }
 
   const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
+
+  //array of srcap machines, empty if none
+  const machines = req.body.machines ? JSON.parse(req.body.machines) : [];
 
   const inputDate = req.body.inputDate; // Retrieve the custom date
   const formattedDate = formatDate(inputDate) || formatDate(new Date());
@@ -153,8 +179,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const header = cleanData(
               repairSheet.getRow(2).getCell(colNumber).value
             );
-            console.log("Header:", header);            
-            
+            console.log("Header:", header);
+
             // find matching header/column
             let templateColIndex = -1;
             const templateHeaderRow = templateSheet.getRow(1);
@@ -172,13 +198,15 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
               // insert part SKU
               templateRow.getCell(templateColIndex).value = partSku;
-              
+
               // insert qty of part
               templateRow.getCell(templateColIndex + 1).value = cell.value;
               const templateHeader = templateSheet
                 .getRow(1)
                 .getCell(templateColIndex).value;
-              console.log(`Qty: ${cell.value} and Part SKU: ${partSku} inserted under ${templateHeader}`);
+              console.log(
+                `Qty: ${cell.value} and Part SKU: ${partSku} inserted under ${templateHeader}`
+              );
             }
           });
           break;
@@ -202,12 +230,6 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       let errorCode = null;
       let repairSheet = null;
       let preRefurbSku = null;
-
-      // Brand new SKU
-      const pro6001SKU = "AI00420711001";
-      const pro6002SKU = "AI00427111001";
-      const seGraySKU = "AI00419711001";
-      const seWhiteSKU = "AI00419811001";
 
       // determine which repair sheet/SKU
       if (model.includes("6001")) {
@@ -274,10 +296,6 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       }
     });
 
-    const location = "ASD-TSL-TX";
-    const type = "检测翻新";
-    const qty = 1;
-
     // add pro orders to pro sheet
     proOrders.forEach(
       (
@@ -288,7 +306,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(proOrderNumColIndex).value = orderNumber;
         row.getCell(proOrderNumColIndex + 1).value = location;
         row.getCell(proOrderNumColIndex + 1).style = redFont;
-        row.getCell(proOrderNumColIndex + 3).value = type;
+        row.getCell(proOrderNumColIndex + 3).value = refurb;
         row.getCell(proOrderNumColIndex + 3).style = redFont;
         row.getCell(proOrderNumColIndex + 4).value = preRefurbSku;
         row.getCell(proOrderNumColIndex + 6).value = qty;
@@ -310,7 +328,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(seOrderNumColIndex).value = orderNumber;
         row.getCell(seOrderNumColIndex + 1).value = location;
         row.getCell(seOrderNumColIndex + 1).style = redFont;
-        row.getCell(seOrderNumColIndex + 3).value = type;
+        row.getCell(seOrderNumColIndex + 3).value = refurb;
         row.getCell(seOrderNumColIndex + 3).style = redFont;
         row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
         row.getCell(seOrderNumColIndex + 6).value = qty;
@@ -322,8 +340,84 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       }
     );
 
-    // console.log("PRO Sheet Content:", proSheet.getSheetValues());
-    // console.log("SE Sheet Content:", seSheet.getSheetValues());
+    const totalScrap = machines.length;
+
+    if (totalScrap > 0) {
+      const proScrapOrders = [];
+      const seScrapOrders = [];
+
+      const lastProOrderNum =
+        parseInt(
+          continueOrdernum(proSheet, proOrderNumColIndex).replace(/\D/g, "")
+        ) || 0;
+      const lastSeOrderNum =
+        parseInt(
+          continueOrdernum(seSheet, seOrderNumColIndex).replace(/\D/g, "")
+        ) || 0;
+
+      machines.forEach((scrapMachine, i) => {
+        const isPro = scrapMachine.model.includes("Pro");
+        const isSe = scrapMachine.model.includes("SE");
+        const qty = scrapMachine.qty;
+        const preRefurbSku = isPro
+          ? scrapMachine.model.includes("6001")
+            ? pro6001SKU
+            : pro6002SKU
+          : scrapMachine.model.includes("Gray")
+          ? seGraySKU
+          : seWhiteSKU;
+
+        if (isPro) {
+          for (let i = 0; i < qty; i++) {
+            const orderNum = `TSLPRO${formattedDate}${
+              lastProOrderNum + proScrapOrders.length + 1
+            }`;
+            proScrapOrders.push({
+              orderNum,
+              startDate: finishDate,
+              preRefurbSku,
+            });
+          }
+        } else if (isSe) {
+          for (let i = 0; i < qty; i++) {
+            const orderNum = `TSLSE${formattedDate}${
+              lastSeOrderNum + seScrapOrders.length + 1
+            }`;
+            seScrapOrders.push({
+              orderNum,
+              startDate: finishDate,
+              preRefurbSku,
+            });
+          }
+        }
+      });
+
+      proScrapOrders.forEach(({ orderNum, startDate, preRefurbSku }, index) => {
+        const row = proSheet.getRow(proOrders.length + index + 2);
+        row.getCell(proOrderNumColIndex).value = orderNum;
+        row.getCell(proOrderNumColIndex + 1).value = location;
+        row.getCell(proOrderNumColIndex + 1).style = redFont;
+        row.getCell(proOrderNumColIndex + 3).value = scrap;
+        row.getCell(proOrderNumColIndex + 3).style = redFont;
+        row.getCell(proOrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(proOrderNumColIndex + 6).value = qty;
+        row.getCell(proOrderNumColIndex + 7).value = startDate;
+        row.getCell(proOrderNumColIndex + 8).value = finishDate;
+      });
+
+      seScrapOrders.forEach(({ orderNum, startDate, preRefurbSku }, index) => {
+        const row = seSheet.getRow(seOrders.length + index + 2);
+        row.getCell(seOrderNumColIndex).value = orderNum;
+        row.getCell(seOrderNumColIndex + 1).value = location;
+        row.getCell(seOrderNumColIndex + 1).style = redFont;
+        row.getCell(seOrderNumColIndex + 3).value = scrap;
+        row.getCell(seOrderNumColIndex + 3).style = redFont;
+        row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(seOrderNumColIndex + 6).value = qty;
+        row.getCell(seOrderNumColIndex + 7).value = startDate;
+        row.getCell(seOrderNumColIndex + 8).value = finishDate;
+      });
+    }
 
     const date = new Date()
       .toLocaleDateString("en-US", {
