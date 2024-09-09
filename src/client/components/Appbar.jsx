@@ -29,6 +29,7 @@ export default function Appbar() {
           >
             Daily Orders
           </Button>
+          <Button color="inherit" onClick={() => {navigate("work-orders")}} >Work Orders</Button>
           <Button
             color="inherit"
             onClick={() => {
@@ -36,8 +37,7 @@ export default function Appbar() {
             }}
           >
             WIP
-          </Button>
-          <Button color="inherit" onClick={() => {navigate("work-orders")}} >Work Orders</Button>
+          </Button>          
         </Toolbar>
       </AppBar>
     </Box>
