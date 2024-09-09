@@ -258,8 +258,8 @@ export default function WorkOrders() {
                       </MenuItem>
                       <MenuItem value="SEgray">SE Gray</MenuItem>
                       <MenuItem value="SEwhite">SE White</MenuItem>
-                      <MenuItem value="6001">6001 Pro</MenuItem>
-                      <MenuItem value="6002">6002 Pro</MenuItem>
+                      <MenuItem value="6001 Pro">6001 Pro Gray</MenuItem>
+                      <MenuItem value="6002 Pro">6002 Pro Gray</MenuItem>
                     </TextField>
                     <TextField
                       variant="filled"

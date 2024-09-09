@@ -358,6 +358,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         ) || 0;
 
       machines.forEach((scrapMachine, i) => {
+        console.log(scrapMachine);
         const isPro = scrapMachine.model.includes("Pro");
         const isSe = scrapMachine.model.includes("SE");
         const qty = scrapMachine.qty;
