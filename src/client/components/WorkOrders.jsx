@@ -23,11 +23,15 @@ export default function WorkOrders() {
   const [date, setDate] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarColor, setSnackbarColor] = useState("#49c758")
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const showSnackbar = (message) => {
+  const showSnackbar = (message, color) => {
     setSnackbarMessage(message);
+    if (color) {
+      setSnackbarColor(color)
+    }
     setSnackbarOpen(true);
   };
 
@@ -59,7 +63,7 @@ export default function WorkOrders() {
     e.preventDefault();
 
     if (!file1 || !file2) {
-      showSnackbar("Select files for work orders");
+      showSnackbar("Select files for work orders", "red");
       return;
     }
 
@@ -176,7 +180,7 @@ export default function WorkOrders() {
         autoHideDuration={5000}
         sx={{
           "& .MuiSnackbarContent-root": {
-            backgroundColor: "#49c758",
+            backgroundColor: snackbarColor,
           },
         }}
       />

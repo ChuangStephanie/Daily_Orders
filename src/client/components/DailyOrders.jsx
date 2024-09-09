@@ -6,6 +6,7 @@ import {
   SnackbarContent,
   CircularProgress,
   Slide,
+  colors,
 } from "@mui/material";
 import { CloudUploadRounded } from "@mui/icons-material";
 import { uploadFile, uploadProcessedFile } from "../API";
@@ -20,11 +21,15 @@ export default function DailyOrders() {
   const [processed, setProcessed] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarColor, setSnackbarColor] = useState("#49c758")
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const showSnackbar = (message) => {
+  const showSnackbar = (message, color) => {
     setSnackbarMessage(message);
+    if (color) {
+      setSnackbarColor(color)
+    }
     setSnackbarOpen(true);
   };
 
@@ -59,7 +64,7 @@ export default function DailyOrders() {
         showSnackbar("Processed file uploaded");
       }
     } else {
-      showSnackbar("Only excel files accepted");
+      showSnackbar("Only excel files accepted", "red");
     }
   };
 
@@ -71,7 +76,7 @@ export default function DailyOrders() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!upload || !processed) {
-      alert("Please upload required files.");
+      showSnackbar("Please upload required files.", "red");
       return;
     }
     setLoading(true);
@@ -187,7 +192,7 @@ export default function DailyOrders() {
         autoHideDuration={5000}
         sx={{
           "& .MuiSnackbarContent-root": {
-            backgroundColor: "#49c758",
+            backgroundColor: snackbarColor,
           },
         }}
       />
