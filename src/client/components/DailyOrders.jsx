@@ -70,7 +70,6 @@ export default function DailyOrders() {
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.stopPropagation();
   };
 
   const handleSubmit = async (e) => {
@@ -103,7 +102,7 @@ export default function DailyOrders() {
         <Box
           className="new-file"
           onDrop={(e) => handleDrop(e, "upload")}
-          onDragOver={handleDrop}
+          onDragOver={handleDragOver}
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,
@@ -135,7 +134,7 @@ export default function DailyOrders() {
         <Box
           className="processed-file"
           onDrop={(e) => handleDrop(e, "processed")}
-          onDragOver={handleDrop}
+          onDragOver={handleDragOver}
           sx={{
             border: "2px dashed #ccc",
             borderRadius: 2,

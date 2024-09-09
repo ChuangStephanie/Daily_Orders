@@ -23,14 +23,14 @@ export default function WorkOrders() {
   const [date, setDate] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarColor, setSnackbarColor] = useState("#49c758")
+  const [snackbarColor, setSnackbarColor] = useState("#49c758");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const showSnackbar = (message, color) => {
     setSnackbarMessage(message);
     if (color) {
-      setSnackbarColor(color)
+      setSnackbarColor(color);
     }
     setSnackbarOpen(true);
   };
@@ -59,6 +59,28 @@ export default function WorkOrders() {
     setDate(e.target.value);
   };
 
+  const handleDrop = (e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    if (file.name.endsWith(".xlsx")) {
+      if (type === "pallet") {
+        setFile1(file);
+        showSnackbar("Pallet Details uploaded.");
+      } else if (type === "repair") {
+        setFile2(file);
+        showSnackbar("Repair Sheet uploaded.");
+      }
+    } else {
+      showSnackbar("Only excel files accepted.", "red");
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -85,9 +107,11 @@ export default function WorkOrders() {
 
   return (
     <Box className="work-orders">
-      <h1 className="title" >Work Orders</h1>
+      <h1 className="title">Work Orders</h1>
       <Box
         className="palletDrop"
+        onDrop={(e) => handleDrop(e, "pallet")}
+        onDragOver={handleDragOver}
         sx={{
           border: "2px dashed #ccc",
           borderRadius: 2,
@@ -108,12 +132,19 @@ export default function WorkOrders() {
             variant="contained"
           >
             Pallet Details
-            <input type="file" name="Pallet Details" hidden onChange={handleFile1Change} />
+            <input
+              type="file"
+              name="Pallet Details"
+              hidden
+              onChange={handleFile1Change}
+            />
           </Button>
         </Box>
       </Box>
       <Box
         className="repairDrop"
+        onDrop={(e) => handleDrop(e, "repair")}
+        onDragOver={handleDragOver}
         sx={{
           border: "2px dashed #ccc",
           borderRadius: 2,
@@ -134,7 +165,12 @@ export default function WorkOrders() {
             variant="contained"
           >
             Repair Sheet
-            <input type="file" name="Repair Sheet" hidden onChange={handleFile2Change} />
+            <input
+              type="file"
+              name="Repair Sheet"
+              hidden
+              onChange={handleFile2Change}
+            />
           </Button>
         </Box>
       </Box>
@@ -172,6 +208,7 @@ export default function WorkOrders() {
           )}
         </Button>
       </Box>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       <Snackbar
         open={snackbarOpen}
         onClose={handleCloseSnackbar}
