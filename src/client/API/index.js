@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-export const baseURL = "https://daily-orders.onrender.com/api";
+export const baseURL = "http://localhost:5050/api";
 
 export async function uploadFile(file) {
   if (!file) {
@@ -73,7 +73,7 @@ export async function uploadProcessedFile(processed) {
   }
 }
 
-export async function processWorkOrders(files) {
+export async function processWorkOrders(files, machines) {
   if (!files || files.length <= 1) {
     alert("Upload required files.");
     return;
@@ -83,7 +83,12 @@ export async function processWorkOrders(files) {
 
   files.forEach((file) => {
     formData.append("files", file);
-  })
+  });
+
+  if (machines && machines.length > 0) {
+    formData.append("machines", JSON.stringify(machines));
+  }
+  console.log("Machines Appended:", machines);
 
   try {
     const response = await fetch(`${baseURL}/work-orders`, {
@@ -98,11 +103,11 @@ export async function processWorkOrders(files) {
     const blob = await response.blob();
 
     const date = new Date()
-    .toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-    })
-    .replace(/\//g, ".");
+      .toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\//g, ".");
     const fileName = `Work Orders ${date}.xlsx`;
 
     const url = window.URL.createObjectURL(blob);
@@ -113,10 +118,8 @@ export async function processWorkOrders(files) {
 
     //cleanup after download
     setTimeout(() => window.URL.revokeObjectURL(url), 10000);
-
   } catch (error) {
     console.error(`Error processing work orders: ${error}`);
     throw error;
   }
-
-};
+}

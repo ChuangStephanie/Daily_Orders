@@ -22,7 +22,7 @@
   margin-bottom: 10px;
 }
 
-.files, .uploads, .form {
+.files, .uploads, .form, .scrapFields {
   display: flex;
   flex-direction: column;
   align-items: center;

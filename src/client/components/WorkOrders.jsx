@@ -24,10 +24,10 @@ export default function WorkOrders() {
   const [file1, setFile1] = useState(null);
   const [file2, setFile2] = useState(null);
   const [date, setDate] = useState(null);
-  const [machine, setMachine] = useState("");
+  const [formValues, setFormValues] = useState([{ model: "", qty: "" }]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarColor, setSnackbarColor] = useState("#49c758");
+  const [snackbarColor, setSnackbarColor] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,6 +35,8 @@ export default function WorkOrders() {
     setSnackbarMessage(message);
     if (color) {
       setSnackbarColor(color);
+    } else {
+      setSnackbarColor("#49c758");
     }
     setSnackbarOpen(true);
   };
@@ -71,10 +73,10 @@ export default function WorkOrders() {
     if (file.name.endsWith(".xlsx")) {
       if (type === "pallet") {
         setFile1(file);
-        showSnackbar("Pallet Details uploaded.");
+        showSnackbar("Pallet Details uploaded");
       } else if (type === "repair") {
         setFile2(file);
-        showSnackbar("Repair Sheet uploaded.");
+        showSnackbar("Repair Sheet uploaded");
       }
     } else {
       showSnackbar("Only excel files accepted.", "red");
@@ -85,8 +87,20 @@ export default function WorkOrders() {
     e.preventDefault();
   };
 
-  const handleMachineChange = (e) => {
-    setMachine(e.target.value);
+  const handleChange = (i, e) => {
+    const newFormValues = [...formValues];
+    newFormValues[i][e.target.name] = e.target.value;
+    setFormValues(newFormValues);
+  };
+  const addFormFields = () => {
+    setFormValues([...formValues, { model: "", qty: "" }]);
+    console.log("item added");
+  };
+  const removeFormFields = (i) => {
+    const newFormValues = [...formValues];
+    newFormValues.splice(i, 1);
+    setFormValues(newFormValues);
+    console.log("item removed");
   };
 
   const handleSubmit = async (e) => {
@@ -98,11 +112,12 @@ export default function WorkOrders() {
     }
 
     const filesArray = [file1, file2];
+    const machines = formValues;
 
     setLoading(true);
 
     try {
-      await processWorkOrders(filesArray);
+      await processWorkOrders(filesArray, machines);
       console.log("Uploaded files:", filesArray);
     } catch (error) {
       console.error("Error processing orders.");
@@ -213,55 +228,80 @@ export default function WorkOrders() {
             <Box className="scrap">
               <h2>Scrap</h2>
               <Box className="scrapFields">
-                <TextField
-                  select
-                  variant="filled"
-                  label="Machine"
+                {formValues.map((element, index) => (
+                  <Box key={index}>
+                    <TextField
+                      select
+                      variant="filled"
+                      name="model"
+                      label="Machine"
+                      size="small"
+                      value={element.model || ""}
+                      onChange={(e) => handleChange(index, e)}
+                      InputLabelProps={{
+                        sx: {
+                          color: "gray",
+                          [`&.${inputLabelClasses.shrink}`]: {
+                            color: "primary",
+                          },
+                        },
+                      }}
+                      sx={{
+                        minWidth: 120,
+                        "& .MuiInputBase-input": {
+                          color: "gray",
+                        },
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>None</em>
+                      </MenuItem>
+                      <MenuItem value="SEgray">SE Gray</MenuItem>
+                      <MenuItem value="SEwhite">SE White</MenuItem>
+                      <MenuItem value="6001">6001 Pro</MenuItem>
+                      <MenuItem value="6002">6002 Pro</MenuItem>
+                    </TextField>
+                    <TextField
+                      variant="filled"
+                      name="qty"
+                      label="Amount"
+                      size="small"
+                      type="number"
+                      value={element.qty || ""}
+                      onChange={(e) => handleChange(index, e)}
+                      InputLabelProps={{
+                        sx: {
+                          color: "gray",
+                          [`&.${inputLabelClasses.shrink}`]: {
+                            color: "primary",
+                          },
+                        },
+                      }}
+                      sx={{
+                        maxWidth: 120,
+                        "& .MuiInputBase-input": {
+                          color: "gray",
+                        },
+                      }}
+                    />
+                    {index ? (
+                      <Button
+                        className="remove"
+                        variant="contained"
+                        size="small"
+                        onClick={() => removeFormFields(index)}
+                      >
+                        Remove
+                      </Button>
+                    ) : null}
+                  </Box>
+                ))}
+                <Button
+                  className="add"
+                  variant="contained"
                   size="small"
-                  InputLabelProps={{
-                    sx: {
-                      color: "gray",
-                      [`&.${inputLabelClasses.shrink}`]: {
-                        color: "primary",
-                      },
-                    },
-                  }}
-                  sx={{
-                    minWidth: 120,
-                    "& .MuiInputBase-input": {
-                      color: "gray",
-                    },
-                  }}
+                  onClick={addFormFields}
                 >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  <MenuItem value="SEgray" >SE Gray</MenuItem>
-                  <MenuItem value="SEwhite" >SE White</MenuItem>
-                  <MenuItem value="6001" >6001 Pro</MenuItem>
-                  <MenuItem value="6002" >6002 Pro</MenuItem>
-                </TextField>
-                <TextField
-                  variant="filled"
-                  label="Amount"
-                  size="small"
-                  type="number"
-                  InputLabelProps={{
-                    sx: {
-                      color: "gray",
-                      [`&.${inputLabelClasses.shrink}`]: {
-                        color: "primary",
-                      },
-                    },
-                  }}
-                  sx={{
-                    maxWidth: 120,
-                    "& .MuiInputBase-input": {
-                      color: "gray",
-                    },
-                  }}
-                />
-                <Button className="add" variant="contained" size="small">
                   Add
                 </Button>
               </Box>

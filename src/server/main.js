@@ -8,18 +8,7 @@ const workRouter = require("./API/WorkOrders");
 
 const app = express();
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = ["https://daily-orders.netlify.app"];
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORs"));
-    }
-  },
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {

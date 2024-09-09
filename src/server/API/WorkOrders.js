@@ -68,6 +68,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
   //array of srcap machines, empty if none
   const machines = req.body.machines ? JSON.parse(req.body.machines) : [];
+  console.log("Scraps:", machines);
 
   const inputDate = req.body.inputDate; // Retrieve the custom date
   const formattedDate = formatDate(inputDate) || formatDate(new Date());
@@ -341,6 +342,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     );
 
     const totalScrap = machines.length;
+    console.log("Total Scrap:", totalScrap);
 
     if (totalScrap > 0) {
       const proScrapOrders = [];
@@ -433,6 +435,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       if (err) {
         res.status(500).send(`Error downloading file: ${err.message}`);
       }
+
+      console.log("file sent!");
 
       // remove temp file
       fs.unlink(filteredFilePath, (unlinkErr) => {
