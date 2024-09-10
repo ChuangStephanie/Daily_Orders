@@ -25,7 +25,7 @@
 }
 
 .title {
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 
 .scrapFields {
@@ -34,10 +34,17 @@
     align-items: start;
 }
 
-.files, .uploads, .form {
+.uploads {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0px;
 }
 
 .add {
