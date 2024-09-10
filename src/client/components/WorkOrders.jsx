@@ -117,8 +117,8 @@ export default function WorkOrders() {
     setLoading(true);
 
     try {
-      await processWorkOrders(filesArray, machines);
-      console.log("Uploaded files:", filesArray);
+      await processWorkOrders(filesArray, machines, date);
+      console.log("Uploaded:", filesArray, machines, date);
     } catch (error) {
       console.error("Error processing orders.");
       setError("Failed to process orders.");

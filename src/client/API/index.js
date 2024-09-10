@@ -73,7 +73,7 @@ export async function uploadProcessedFile(processed) {
   }
 }
 
-export async function processWorkOrders(files, machines) {
+export async function processWorkOrders(files, machines, date) {
   if (!files || files.length <= 1) {
     alert("Upload required files.");
     return;
@@ -88,7 +88,14 @@ export async function processWorkOrders(files, machines) {
   if (machines && machines.length > 0) {
     formData.append("machines", JSON.stringify(machines));
   }
+
+  if (date) {
+    formData.append("inputDate", JSON.stringify(date));
+  }
+
   console.log("Machines Appended:", machines);
+
+
 
   try {
     const response = await fetch(`${baseURL}/work-orders`, {
