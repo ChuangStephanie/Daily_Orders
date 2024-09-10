@@ -21,14 +21,16 @@ export default function DailyOrders() {
   const [processed, setProcessed] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarColor, setSnackbarColor] = useState("#49c758")
+  const [snackbarColor, setSnackbarColor] = useState("#49c758");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const showSnackbar = (message, color) => {
     setSnackbarMessage(message);
     if (color) {
-      setSnackbarColor(color)
+      setSnackbarColor(color);
+    } else {
+      setSnackbarColor("#49c758");
     }
     setSnackbarOpen(true);
   };

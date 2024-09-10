@@ -4,7 +4,7 @@
   align-items: center;
 }
 
-.work-orders, .inputs {
+.work-orders {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -16,6 +16,12 @@
     align-items: center;
     margin-left: 25px;
     margin-right: 25px;
+}
+
+.inputs {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
 }
 
 .title {
