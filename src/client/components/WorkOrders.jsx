@@ -135,7 +135,7 @@ export default function WorkOrders() {
         <Box className="form">
           <Box className="inputs">
             <Box className="uploads">
-              <h2>Uploads</h2>
+              <h2>Files</h2>
               <Box
                 className="palletDrop"
                 onDrop={(e) => handleDrop(e, "pallet")}
