@@ -348,14 +348,10 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const proScrapOrders = [];
       const seScrapOrders = [];
 
-      const lastProOrderNum =
-        parseInt(
-          continueOrdernum(proSheet, proOrderNumColIndex).replace(/\D/g, "")
-        ) || 0;
-      const lastSeOrderNum =
-        parseInt(
-          continueOrdernum(seSheet, seOrderNumColIndex).replace(/\D/g, "")
-        ) || 0;
+      const lastProOrderNum = proOrders.length;
+      const lastSeOrderNum = seOrders.length;
+
+        console.log(lastProOrderNum, lastSeOrderNum);
 
       machines.forEach((scrapMachine, i) => {
         console.log(scrapMachine);
@@ -375,6 +371,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const orderNum = `TSLPRO${formattedDate}${
               lastProOrderNum + proScrapOrders.length + 1
             }`;
+            console.log(orderNum);
             proScrapOrders.push({
               orderNum,
               startDate: finishDate,
@@ -386,6 +383,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const orderNum = `TSLSE${formattedDate}${
               lastSeOrderNum + seScrapOrders.length + 1
             }`;
+            console.log(orderNum);
             seScrapOrders.push({
               orderNum,
               startDate: finishDate,
