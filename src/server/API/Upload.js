@@ -168,7 +168,16 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     });
 
     // create orders today sheet
-    const ordersWorksheet = workbook.addWorksheet("Orders Today");
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      const month = `0${date.getMonth() + 1}`.slice(-2);
+      const day = `0${date.getDate()}`.slice(-2);
+      return `${month}${day}`;
+    };
+    const ordersWorksheet = workbook.addWorksheet(`${formatDate(new Date())}`);
     ordersWorksheet.addRow(retainColumns);
     filteredRows.forEach((row) => ordersWorksheet.addRow(row));
 
