@@ -225,15 +225,6 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
         category = "Part";
       }
 
-      // const category =
-      //   machineValue &&
-      //   machineValue
-      //     .toString()
-      //     .toLowerCase()
-      //     .includes(machineSearchTerm.toLowerCase())
-      //     ? "Machine"
-      //     : "Part";
-
       row.getCell(categoryColIndex).value = category;
       console.log(
         `Row ${rowNumber}: Machine Value: ${machineValue}, Category: ${category}`
