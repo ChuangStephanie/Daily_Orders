@@ -209,14 +209,30 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
       const machineValue = row.getCell(machineColIndex).value;
       console.log("Machine Value:", machineValue);
 
-      const category =
-        machineValue &&
-        machineValue
-          .toString()
-          .toLowerCase()
-          .includes(machineSearchTerm.toLowerCase())
-          ? "Machine"
-          : "Part";
+      const machineVal = machineValue
+        ? machineValue.toString().toLowerCase()
+        : "";
+      const isMachine = machineVal.includes(machineSearchTerm.toLowerCase());
+      const isPart = machineVal.includes(partSearchTerm.toLowerCase());
+      const exclude = machineVal.includes("带配件") || machineVal.includes("无配件");
+
+      let category;
+      if (isMachine && isPart && !exclude) {
+        category = "Part";
+      } else if (isMachine) {
+        category = "Machine";
+      } else {
+        category = "Part";
+      }
+
+      // const category =
+      //   machineValue &&
+      //   machineValue
+      //     .toString()
+      //     .toLowerCase()
+      //     .includes(machineSearchTerm.toLowerCase())
+      //     ? "Machine"
+      //     : "Part";
 
       row.getCell(categoryColIndex).value = category;
       console.log(
