@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 export const baseURL = "http://localhost:5050/api";
+export const flaskURL = "http://localhost:5000/api";
 
 export async function uploadFile(file) {
   if (!file) {
@@ -95,8 +96,6 @@ export async function processWorkOrders(files, machines, date) {
 
   console.log("Machines Appended:", machines);
 
-
-
   try {
     const response = await fetch(`${baseURL}/work-orders`, {
       method: "POST",
@@ -127,6 +126,46 @@ export async function processWorkOrders(files, machines, date) {
     setTimeout(() => window.URL.revokeObjectURL(url), 10000);
   } catch (error) {
     console.error(`Error processing work orders: ${error}`);
+    throw error;
+  }
+}
+
+export async function refurbRepairOrders(file) {
+  if (!file) {
+    alert("No file uploaded.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await fetch(`${flaskURL}/refurb-repair`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error! status: ${response.status}`);
+    }
+
+    const fileName = "Output.xlsx"
+
+    // response in blob format
+    const blob = await response.blob();
+
+    // url for blob
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+
+    //cleanup after download
+    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+   
+  } catch (error) {
     throw error;
   }
 }

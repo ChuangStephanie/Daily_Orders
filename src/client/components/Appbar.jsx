@@ -37,7 +37,15 @@ export default function Appbar() {
             }}
           >
             WIP
-          </Button>          
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => {
+              navigate("/refurb-repair");
+            }}
+          >
+            Refurb Repair
+          </Button>             
         </Toolbar>
       </AppBar>
     </Box>
