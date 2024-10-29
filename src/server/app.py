@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import os
 import pandas as pd
 import sys
@@ -155,7 +155,7 @@ def process_file():
     output_file = os.path.join(output_dir, "output.xlsx")
     main(df, output_file)
 
-    return jsonify({"message": "File processed successfully!", "output_file": output_file})
+    return send_file(output_file, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
