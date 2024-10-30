@@ -49,7 +49,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
   const clearProcessedDir = () => {
     fs.readdir(processedDir, (err, files) => {
       if (err) {
-        console.err("Error reading processed dir:", err);
+        console.error("Error reading processed dir:", err);
         return;
       }
 
