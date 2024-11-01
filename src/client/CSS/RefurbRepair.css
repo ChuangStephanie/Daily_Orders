@@ -4,7 +4,7 @@
     align-items: center;
   }
 
-.upload {
+.upload-form, .upload {
     display: flex;
     flex-direction: column;
     align-items: center;

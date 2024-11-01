@@ -50,6 +50,19 @@ export default function RefurbRepair() {
     }
   };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    setFile(file);
+    showSnackbar("File uploaded");
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -60,7 +73,7 @@ export default function RefurbRepair() {
       showSnackbar("File processed!");
     } catch (error) {
       showSnackbar("Error processing file", "red");
-    } finally {        
+    } finally {
       showSnackbar("File processed!");
       setLoading(false);
     }
@@ -69,33 +82,50 @@ export default function RefurbRepair() {
   return (
     <Box className="main-container">
       <h1>Refurb Repair</h1>
-      <p>Upload repair sheet</p>
-      <Box className="upload">
-        <Button
-          startIcon={<CloudUploadRounded />}
-          component="label"
-          variant="contained"
-        >
-          Repair Sheet
-          <input
-            type="file"
-            name="Repair Sheet"
-            hidden
-            onChange={handleFileChange}
-          />
-        </Button>
-        <Button
-          className="submit"
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <CircularProgress size={24} sx={{ color: "white" }} />
-          ) : (
-            "Submit"
-          )}
-        </Button>
+      <Box
+        className="upload"
+        onDrop={(e) => handleDrop(e)}
+        onDragOver={handleDragOver}
+        sx={{
+          border: "2px dashed #ccc",
+          borderRadius: 2,
+          padding: 4,
+          margin: 1,
+          textAlign: "center",
+          position: "relative",
+          "&:hover": {
+            borderColor: "#888",
+          },
+        }}
+      >
+        <p>Upload repair sheet</p>
+        <Box className="upload-form">
+          <Button
+            startIcon={<CloudUploadRounded />}
+            component="label"
+            variant="contained"
+          >
+            Repair Sheet
+            <input
+              type="file"
+              name="Repair Sheet"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Button>
+          <Button
+            className="submit"
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: "white" }} />
+            ) : (
+              "Submit"
+            )}
+          </Button>
+        </Box>
       </Box>
       <Snackbar
         open={snackbarOpen}
