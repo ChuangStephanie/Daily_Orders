@@ -51,8 +51,8 @@
     "vite": "^5.4.1"
   },
   "description": "Created using React + Vite",
-  "main": "eslint.config.js",
+  "main": "src/main.cjs",
   "keywords": [],
-  "author": "",
+  "author": "Jamie",
   "license": "ISC"
 }

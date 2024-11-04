@@ -151,10 +151,8 @@ export async function refurbRepairOrders(file) {
 
     const fileName = "Output.xlsx"
 
-    // response in blob format
     const blob = await response.blob();
 
-    // url for blob
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -162,7 +160,6 @@ export async function refurbRepairOrders(file) {
     document.body.appendChild(link);
     link.click();
 
-    //cleanup after download
     setTimeout(() => window.URL.revokeObjectURL(url), 10000);
    
   } catch (error) {
