@@ -158,4 +158,5 @@ def process_file():
     return send_file(output_file, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 if __name__ == "__main__":
+    print("Server running on port 5075")
     app.run(debug=True, port=5075)
