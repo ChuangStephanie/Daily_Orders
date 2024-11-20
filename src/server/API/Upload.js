@@ -8,7 +8,21 @@ const processedOrders = require("./UploadProcessed").processedOrders;
 
 const uploadDir = path.join(__dirname, "..", "db", "uploads");
 const processedDir = path.join(__dirname, "..", "db", "processed");
-console.log("Directory path:", uploadDir, "Processed path:", processedDir);
+const templatePath = path.join(
+  __dirname,
+  "..",
+  "db",
+  "templates",
+  "Outbound.xlsx"
+);
+console.log(
+  "Directory path:",
+  uploadDir,
+  "Processed path:",
+  processedDir,
+  "Outbound template:",
+  templatePath
+);
 
 const upload = multer({ dest: uploadDir });
 
@@ -22,6 +36,13 @@ const trackingNum = "跟踪号";
 const orderNum = "发货单号";
 const quantity = "发货数量";
 const createTime = "创建时间";
+const carrier = "配送方式";
+const adressee = "收件人姓名";
+const state = "省份";
+const city = "市区";
+const street1 = "收件人地址1";
+const street2 = "收件人地址2";
+const zip = "邮编";
 
 // columns to keep
 const retainColumns = [
@@ -73,6 +94,10 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(filePath);
 
+    // load odoo outbound template
+    const outWorkbook = new ExcelJS.Workbook();
+    await outWorkbook.xlsx.readFile(templatePath);
+
     // get inital worksheet
     const worksheet = workbook.getWorksheet(1);
 
@@ -91,6 +116,13 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const trackingNumIndex = colIndices[trackingNum];
     const orderNumIndex = colIndices[orderNum];
     const createTimeIndex = colIndices[createTime];
+    const carrierIndex = colIndices[carrier];
+    const adresseeIndex = colIndices[adressee];
+    const stateIndex = colIndices[state];
+    const cityIndex = colIndices[city];
+    const street1Index = colIndices[street1];
+    const street2Index = colIndices[street2];
+    const zipIndex = colIndices[zip];
 
     if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
@@ -214,7 +246,8 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
         : "";
       const isMachine = machineVal.includes(machineSearchTerm.toLowerCase());
       const isPart = machineVal.includes(partSearchTerm.toLowerCase());
-      const exclude = machineVal.includes("带配件") || machineVal.includes("无配件");
+      const exclude =
+        machineVal.includes("带配件") || machineVal.includes("无配件");
 
       let category;
       if (isMachine && isPart && !exclude) {
