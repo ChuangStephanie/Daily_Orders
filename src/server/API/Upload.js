@@ -135,11 +135,12 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
 
         let addedOriginalRow = false;
 
+        // change to +1 and +2 if the extra columns aren't there
         skus.forEach((skuData, i) => {
           if (skuData.skuValue) {
             const currentSKUIndex = colIndices[skuData.sku];
-            const currentItemIndex = currentSKUIndex + 1;
-            const currentQtyIndex = currentSKUIndex + 2;
+            const currentItemIndex = currentSKUIndex + 3;
+            const currentQtyIndex = currentSKUIndex + 4;
 
             const newRow = {
               [orderNum]: row.getCell(orderNumIndex).value,
