@@ -139,8 +139,15 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
         skus.forEach((skuData, i) => {
           if (skuData.skuValue) {
             const currentSKUIndex = colIndices[skuData.sku];
-            const currentItemIndex = currentSKUIndex + 3;
-            const currentQtyIndex = currentSKUIndex + 4;
+            let currentItemIndex, currentQtyIndex;
+
+            if (skuData.sku === "SKU1") {
+              currentItemIndex = currentSKUIndex + 3;
+              currentQtyIndex = currentSKUIndex + 4;
+            } else {
+              currentItemIndex = currentSKUIndex + 1;
+              currentQtyIndex = currentSKUIndex + 2;              
+            }
 
             const newRow = {
               [orderNum]: row.getCell(orderNumIndex).value,
