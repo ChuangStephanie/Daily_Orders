@@ -7,7 +7,7 @@ const path = require("path");
 const uploadDir = path.join(__dirname, "..", "db", "uploads");
 const processedDir = path.join(__dirname, "..", "db", "processed");
 const upload = multer({ dest: uploadDir });
-const templatePath = path.join(
+const outboundPath = path.join(
   __dirname,
   "..",
   "db",
@@ -33,14 +33,17 @@ const street1 = "收件人地址1";
 const street2 = "收件人地址2";
 const zip = "邮编";
 
+const outboundImport = async (inpuFilePath, outputFilePath, retainOutbound) => {
+  try {
+    // template file
+    const outboundWorkbook = new ExcelJS.Workbook();
+    await outboundWorkbook.xlsx.readFile(outboundPath);
+    const outboundWorksheet = outboundWorkbook.getWorksheet(1);
+    const outboundHeaderRow = outboundWorksheet.getRow(1);
 
-const outboundImport = async () => {
+    const machineOutbound = new ExcelJS.Workbook();
+    const partsOutbound = new ExcelJS.Workbook();
+ 
 
-    try {
-
-    } catch (error) {
-        
-    }
-
-}
-
+  } catch (error) {}
+};

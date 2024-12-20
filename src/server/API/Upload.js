@@ -23,6 +23,14 @@ const orderNum = "发货单号";
 const quantity = "发货数量";
 const createTime = "创建时间";
 
+// client info
+const addressee = "收件人姓名";
+const state = "省份";
+const city = "市区";
+const street1 = "收件人地址1";
+const street2 = "收件人地址2";
+const zip = "邮编";
+
 // columns to keep
 const retainColumns = [
   orderNum,
@@ -32,6 +40,20 @@ const retainColumns = [
   machineColName,
   quantity,
   createTime,
+];
+
+const retainOutbound = [
+  orderNum,
+  trackingNum,
+  "SKU1",
+  machineColName,
+  quantity,
+  addressee,
+  state,
+  city,
+  street1,
+  street2,
+  zip,
 ];
 
 // route for file uploads and filtering
@@ -91,6 +113,12 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const trackingNumIndex = colIndices[trackingNum];
     const orderNumIndex = colIndices[orderNum];
     const createTimeIndex = colIndices[createTime];
+    const addresseeIndex = colIndices[addressee];
+    const stateIndex = colIndices[state];
+    const cityIndex = colIndices[city];
+    const street1Index = colIndices[street1];
+    const street2Index = colIndices[street2];
+    const zipIndex = colIndices[zip];
 
     if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
@@ -106,6 +134,8 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
 
     // filter rows based on search term
     const filteredRows = [];
+    const outboundRows = [];
+
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       if (rowNumber === 1) return;
       const cellValue = row.getCell(columnIndex).value;
@@ -125,7 +155,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
           return;
         }
 
-        // get SKU index
+        // get SKU values
         const skus = [
           { sku: "SKU1", skuValue: row.getCell(skuIndex).value },
           { sku: "SKU2", skuValue: row.getCell(sku2Index).value },
@@ -146,7 +176,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
               currentQtyIndex = currentSKUIndex + 4;
             } else {
               currentItemIndex = currentSKUIndex + 1;
-              currentQtyIndex = currentSKUIndex + 2;              
+              currentQtyIndex = currentSKUIndex + 2;
             }
 
             const newRow = {
@@ -158,17 +188,44 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
               [createTime]: row.getCell(createTimeIndex).value,
             };
 
+            const newOutbound = {
+              [orderNum]: row.getCell(orderNumIndex).value,
+              [trackingNum]: row.getCell(trackingNumIndex).value,
+              ["SKU1"]: skuData.skuValue,
+              [machineColName]: row.getCell(currentItemIndex).value,
+              [quantity]: row.getCell(currentQtyIndex).value,
+              [addressee]: row.getCell(addresseeIndex).value,
+              [state]: row.getCell(stateIndex).value,
+              [city]: row.getCell(cityIndex).value,
+              [street1]: row.getCell(street1Index).value,
+              [street2]: row.getCell(street2Index).value,
+              [zip]: row.getCell(zipIndex).value,
+            };
+
             if (i === 0 && !skus.slice(1).some((sku) => sku.skuValue)) {
               // push whole row if only SKU1 has data
               filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
-              console.log("Order has 1 item:", row.values);
+              // console.log("Order has 1 item:", row.values);
+
+              outboundRows.push(
+                retainOutbound.map((col) => newOutbound[col] || "")
+              );
+              console.log("order pushed to outbound", row.values);
             } else if (skuData.sku !== "SKU1") {
               // only push specific columns if SKU2/3/4 exist
               filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
               console.log("SKU2+:", newRow);
+
+              outboundRows.push(
+                retainOutbound.map((col) => newOutbound[col] || "")
+              );
             } else if (!addedOriginalRow) {
               // add original row w SKU1 if needed
               filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
+
+              outboundRows.push(
+                retainOutbound.map((col) => newOutbound[col] || "")
+              );
               addedOriginalRow = true;
             }
           }
@@ -222,7 +279,8 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
         : "";
       const isMachine = machineVal.includes(machineSearchTerm.toLowerCase());
       const isPart = machineVal.includes(partSearchTerm.toLowerCase());
-      const exclude = machineVal.includes("带配件") || machineVal.includes("无配件");
+      const exclude =
+        machineVal.includes("带配件") || machineVal.includes("无配件");
 
       let category;
       if (isMachine && isPart && !exclude) {
