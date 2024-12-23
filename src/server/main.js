@@ -15,8 +15,8 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-const uploadDir = path.join(__dirname, "..", "db", "uploads");
-const processedDir = path.join(__dirname, "..", "db", "processed");
+const uploadDir = path.join(__dirname, "db", "uploads");
+const processedDir = path.join(__dirname, "db", "processed");
 // check if dir exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
