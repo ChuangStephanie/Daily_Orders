@@ -3,9 +3,10 @@ const ExcelJS = require("exceljs");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const archiver = require("archiver");
 const uploadRouter = express.Router();
 const processedOrders = require("./UploadProcessed").processedOrders;
-
+const outboundProcess = require("./Outbound");
 const uploadDir = path.join(__dirname, "..", "db", "uploads");
 const processedDir = path.join(__dirname, "..", "db", "processed");
 console.log("Directory path:", uploadDir, "Processed path:", processedDir);
@@ -24,12 +25,13 @@ const quantity = "发货数量";
 const createTime = "创建时间";
 
 // client info
+const carrier = "配送方式";
 const addressee = "收件人姓名";
 const state = "省份";
 const city = "市区";
 const street1 = "收件人地址1";
 const street2 = "收件人地址2";
-const zip = "邮编";
+const zipCode = "邮编";
 
 // columns to keep
 const retainColumns = [
@@ -45,6 +47,7 @@ const retainColumns = [
 const retainOutbound = [
   orderNum,
   trackingNum,
+  carrier,
   "SKU1",
   machineColName,
   quantity,
@@ -53,7 +56,7 @@ const retainOutbound = [
   city,
   street1,
   street2,
-  zip,
+  zipCode,
 ];
 
 // route for file uploads and filtering
@@ -113,12 +116,13 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     const trackingNumIndex = colIndices[trackingNum];
     const orderNumIndex = colIndices[orderNum];
     const createTimeIndex = colIndices[createTime];
+    const carrierIndex = colIndices[carrier];
     const addresseeIndex = colIndices[addressee];
     const stateIndex = colIndices[state];
     const cityIndex = colIndices[city];
     const street1Index = colIndices[street1];
     const street2Index = colIndices[street2];
-    const zipIndex = colIndices[zip];
+    const zipIndex = colIndices[zipCode];
 
     if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
@@ -191,6 +195,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
             const newOutbound = {
               [orderNum]: row.getCell(orderNumIndex).value,
               [trackingNum]: row.getCell(trackingNumIndex).value,
+              [carrier]: row.getCell(carrierIndex).value,
               ["SKU1"]: skuData.skuValue,
               [machineColName]: row.getCell(currentItemIndex).value,
               [quantity]: row.getCell(currentQtyIndex).value,
@@ -199,7 +204,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
               [city]: row.getCell(cityIndex).value,
               [street1]: row.getCell(street1Index).value,
               [street2]: row.getCell(street2Index).value,
-              [zip]: row.getCell(zipIndex).value,
+              [zipCode]: row.getCell(zipIndex).value,
             };
 
             if (i === 0 && !skus.slice(1).some((sku) => sku.skuValue)) {
@@ -311,6 +316,17 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
       }
     });
 
+    await outboundProcess(outboundRows);
+    const machineFilePath = path.join(
+      processedDir,
+      "OutboundTransferMachine.xlsx"
+    );
+    const partsFilePath = path.join(
+      processedDir,
+      "OutboundTransferParts.xlsx"
+    );
+    console.log("outbound import process complete");
+
     // save final file
     try {
       console.log(`Attempting to save new file to: ${filteredFilePath}`);
@@ -320,19 +336,33 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
       console.error("Error writing file:", error);
       return res.status(500).send("Failed to save filtered file");
     }
-    // check if file saved
-    if (!fs.existsSync(filteredFilePath)) {
-      console.error("New file not saved correctly.");
-      return res.status(500).send("Failed to save filterd file.");
-    }
+
+    const zip = archiver("zip", {
+      zlib: { level: 9 },
+    });
+
+    res.attachment("ProcessedFiles.zip");
+
+    zip.pipe(res);
+
+    zip.append(fs.createReadStream(filteredFilePath), {
+      name: "AiperDropshipOrderDetails.xlsx",
+    });
+    zip.append(fs.createReadStream(machineFilePath), {
+      name: "OutboundTransferMachine.xlsx",
+    });
+    zip.append(fs.createReadStream(partsFilePath), {
+      name: "OutboundTransferParts.xlsx",
+    });
+    zip.finalize();
 
     // send new file
-    res.download(filteredFilePath, "AiperDropshipOrderDetails.xlsx", (err) => {
-      if (err) {
-        console.log("Error sending file:", err);
-        res.status(500).send("Failed to send file.");
-      }
-    });
+    // res.download(filteredFilePath, "AiperDropshipOrderDetails.xlsx", (err) => {
+    //   if (err) {
+    //     console.log("Error sending file:", err);
+    //     res.status(500).send("Failed to send file.");
+    //   }
+    // });
   } catch (error) {
     console.error("Error processing Excel file:", error);
     res.status(500).send("Failed to process Excel file.");
