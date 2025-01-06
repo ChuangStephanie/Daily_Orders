@@ -66,9 +66,16 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
   }
 
   console.log("Uploaded file details:", req.file);
+  const newDate = new Date();
+  const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
+  const date = newDate.getDate().toString().padStart(2, "0");
+  const today = `${month}.${date}`;
 
   const filePath = req.file.path;
-  const filteredFilePath = path.join(processedDir, "AiperDropshipOrders.xlsx");
+  const filteredFilePath = path.join(
+    processedDir,
+    `AiperDropshipOrders ${today}.xlsx`
+  );
 
   // clear old files in processed folder
   const clearProcessedDir = () => {
@@ -319,11 +326,11 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     await outboundProcess(outboundRows);
     const machineFilePath = path.join(
       processedDir,
-      "OutboundTransferMachine.xlsx"
+      `OutboundTransferMachine ${today}.xlsx`
     );
     const partsFilePath = path.join(
       processedDir,
-      "OutboundTransferParts.xlsx"
+      `OutboundTransferParts ${today}.xlsx`
     );
     console.log("outbound import process complete");
 
@@ -346,13 +353,13 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     zip.pipe(res);
 
     zip.append(fs.createReadStream(filteredFilePath), {
-      name: "AiperDropshipOrderDetails.xlsx",
+      name: `AiperDropshipOrderDetails ${today}.xlsx`,
     });
     zip.append(fs.createReadStream(machineFilePath), {
-      name: "OutboundTransferMachine.xlsx",
+      name: `OutboundTransferMachine ${today}.xlsx`,
     });
     zip.append(fs.createReadStream(partsFilePath), {
-      name: "OutboundTransferParts.xlsx",
+      name: `OutboundTransferParts ${today}.xlsx`,
     });
     zip.finalize();
 

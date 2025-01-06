@@ -58,10 +58,10 @@ const outboundProcess = async (outboundRows) => {
       let orgCarrier;
       if (carrier == "FEDEX_GROUND") {
         orgCarrier = "FedEx Ground";
-      } else if ( carrier == "USPS_CJ") {
+      } else if (carrier == "USPS_CJ") {
         orgCarrier = "USPS Priority Mail";
       }
-      
+
       const isMachine = machineColName
         .toLowerCase()
         .includes(machineSearchTerm.toLowerCase());
@@ -70,7 +70,7 @@ const outboundProcess = async (outboundRows) => {
         .includes(partSearchTerm.toLowerCase());
       const exclude =
         machineColName.includes("带配件") || machineColName.includes("无配件");
-      const stockRef = `${trackingNum}${sku1}`;      
+      const stockRef = `${trackingNum}${sku1}`;
 
       const newRow = [
         orderNum,
@@ -94,7 +94,7 @@ const outboundProcess = async (outboundRows) => {
         state,
         zipCode,
         addressee,
-        ""
+        "",
       ];
 
       if (isMachine && isPart && !exclude) {
@@ -106,13 +106,21 @@ const outboundProcess = async (outboundRows) => {
       }
     });
 
-    const machineFilePath = path.join(processedDir, "OutboundTransferMachine.xlsx");
-    const partsFilePath = path.join(processedDir, "OutboundTransferParts.xlsx");
+    const newDate = new Date();
+    const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
+    const dateToday = newDate.getDate().toString().padStart(2, "0");
+    const today = `${month}.${dateToday}`;
+
+    const machineFilePath = path.join(
+      processedDir,
+      `OutboundTransferMachine ${today}.xlsx`
+    );
+    const partsFilePath = path.join(processedDir, `OutboundTransferParts ${today}.xlsx`);
 
     await machineOutbound.xlsx.writeFile(machineFilePath);
-    console.log("machine saved")
+    console.log("machine saved");
     await partsOutbound.xlsx.writeFile(partsFilePath);
-    console.log("parts saved")
+    console.log("parts saved");
 
     console.log("Machine Odoo:", machineFilePath);
     console.log("Parts Odoo:", partsFilePath);
