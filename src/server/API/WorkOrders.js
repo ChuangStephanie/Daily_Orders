@@ -241,7 +241,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         preRefurbSku = pro6002SKU;
       } else if (model.includes("SE")) {
         repairSheet = seRepairSheet;
-        if (model.includes("Gray")) {
+        if (model.includes("gray")) {
           preRefurbSku = seGraySKU;
         } else {
           preRefurbSku = seWhiteSKU;
@@ -362,7 +362,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           ? scrapMachine.model.includes("6001")
             ? pro6001SKU
             : pro6002SKU
-          : scrapMachine.model.includes("Gray")
+          : scrapMachine.model.includes("gray")
           ? seGraySKU
           : seWhiteSKU;
 
@@ -383,7 +383,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const orderNum = `TSLSE${formattedDate}${
               lastSeOrderNum + seScrapOrders.length + 1
             }`;
-            console.log(orderNum);
+            console.log(orderNum, preRefurbSku);
             seScrapOrders.push({
               orderNum,
               startDate: finishDate,
