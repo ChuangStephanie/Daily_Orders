@@ -180,7 +180,6 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const header = cleanData(
               repairSheet.getRow(2).getCell(colNumber).value
             );
-            console.log("Header:", header);
 
             // find matching header/column
             let templateColIndex = -1;
@@ -223,9 +222,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     palletSheet.eachRow((row, rowIndex) => {
       if (rowIndex === 1) return;
       const model = row.getCell(modelColIndex).value;
+      console.log("MODEL:", model);
       const sn = row.getCell(snColIndex).value;
       const refurbSku = row.getCell(refurbSkuIndex).value;
-      console.log("Refurb SKU:", refurbSku);
       let orderNumber;
       let startDate = finishDate;
       let errorCode = null;
@@ -241,11 +240,31 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         preRefurbSku = pro6002SKU;
       } else if (model.includes("SE")) {
         repairSheet = seRepairSheet;
-        if (model.includes("gray")) {
-          preRefurbSku = seGraySKU;
+
+        const preModel = findMatchingSN(sn, repairSheet, "Model");
+        console.log("PreModel:", preModel);
+
+        if (preModel) {
+          if (preModel.includes("Gray")) {
+            preRefurbSku = seGraySKU;
+          } else if (preModel.includes("White")) {
+            preRefurbSku = seWhiteSKU;
+          } else {
+            if (model.includes("Gray")) {
+              preRefurbSku = seGraySKU;
+            } else {
+              preRefurbSku = seWhiteSKU;
+            }
+          }
         } else {
-          preRefurbSku = seWhiteSKU;
+          console.log("PreModel is Null");
+          if (model.includes("Gray")) {
+            preRefurbSku = seGraySKU;
+          } else {
+            preRefurbSku = seWhiteSKU;
+          }
         }
+        console.log("PREREFURBSKU", preRefurbSku);
       }
 
       // find start date and error code
@@ -351,7 +370,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const lastProOrderNum = proOrders.length;
       const lastSeOrderNum = seOrders.length;
 
-        console.log(lastProOrderNum, lastSeOrderNum);
+      console.log(lastProOrderNum, lastSeOrderNum);
 
       machines.forEach((scrapMachine, i) => {
         console.log(scrapMachine);
@@ -362,7 +381,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           ? scrapMachine.model.includes("6001")
             ? pro6001SKU
             : pro6002SKU
-          : scrapMachine.model.includes("gray")
+          : scrapMachine.model.includes("Gray")
           ? seGraySKU
           : seWhiteSKU;
 
