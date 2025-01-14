@@ -234,9 +234,47 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       // determine which repair sheet/SKU
       if (model.includes("6001")) {
         repairSheet = pro6001RepairSheet;
+
+        const preModel = findMatchingSN(sn, repairSheet, "Model");
+        console.log("PreModel:", preModel);
+
+        if (preModel) {
+          if (preModel.includes("6001")) {
+            preRefurbSku = pro6001SKU;
+          } else if (preModel.includes("6002")) {
+            preRefurbSku = pro6002SKU;
+          }
+        } else {
+          console.log("PreModel is Null");
+          if (model.includes("6001")) {
+            preRefurbSku = pro6001SKU;
+          } else {
+            preRefurbSku = pro6002SKU;
+          }
+        }
+
         preRefurbSku = pro6001SKU;
       } else if (model.includes("6002")) {
         repairSheet = pro6002RepairSheet;
+
+        const preModel = findMatchingSN(sn, repairSheet, "Model");
+        console.log("PreModel:", preModel);
+
+        if (preModel) {
+          if (preModel.includes("6002")) {
+            preRefurbSku = pro6002SKU;
+          } else if (preModel.includes("6001")) {
+            preRefurbSku = pro6001SKU;
+          }
+        } else {
+          console.log("PreModel is Null");
+          if (model.includes("6002")) {
+            preRefurbSku = pro6002SKU;
+          } else {
+            preRefurbSku = pro6001SKU;
+          }
+        }
+
         preRefurbSku = pro6002SKU;
       } else if (model.includes("SE")) {
         repairSheet = seRepairSheet;
@@ -250,6 +288,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           } else if (preModel.includes("White")) {
             preRefurbSku = seWhiteSKU;
           } else {
+            console.log("PreModel no color");
             if (model.includes("Gray")) {
               preRefurbSku = seGraySKU;
             } else {
@@ -264,8 +303,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             preRefurbSku = seWhiteSKU;
           }
         }
-        console.log("PREREFURBSKU", preRefurbSku);
       }
+
+      console.log("PREREFURBSKU", preRefurbSku);
 
       // find start date and error code
       if (repairSheet) {
