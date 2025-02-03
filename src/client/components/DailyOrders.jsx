@@ -87,11 +87,12 @@ export default function DailyOrders() {
       console.log(processed);
       await uploadFile(upload);
       console.log(upload);
+      showSnackbar("Orders sent!");
     } catch (error) {
       console.error("Error sorting files");
+      showSnackbar("Error processing orders.", "red");
       setError("Failed to find today's order.");
     } finally {
-      showSnackbar("Orders sent!");
       setLoading(false);
     }
   };
@@ -184,7 +185,6 @@ export default function DailyOrders() {
           "Submit"
         )}
       </Button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
       <Snackbar
         open={snackbarOpen}
         onClose={handleCloseSnackbar}

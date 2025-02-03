@@ -376,6 +376,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
   } finally {
     // clean up temp files
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    clearProcessedDir();
   }
 });
 

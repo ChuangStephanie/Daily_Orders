@@ -119,11 +119,11 @@ export default function WorkOrders() {
     try {
       await processWorkOrders(filesArray, machines, date);
       console.log("Uploaded:", filesArray, machines, date);
+      showSnackbar("Work orders processed!");
     } catch (error) {
       console.error("Error processing orders.");
-      setError("Failed to process orders.");
+      showSnackbar("Error processing orders.", "red");
     } finally {
-      showSnackbar("Work orders processed!");
       setLoading(false);
     }
   };
@@ -321,7 +321,6 @@ export default function WorkOrders() {
               "Submit"
             )}
           </Button>
-          {error && <p style={{ color: "red" }}>{error}</p>}
         </Box>
         <Snackbar
           open={snackbarOpen}
