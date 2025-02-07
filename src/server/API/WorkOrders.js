@@ -94,6 +94,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const proSheet = workbook.getWorksheet("PRO");
     const scubaSheet = workbook.getWorksheet("Scuba");
     const seSheet = workbook.getWorksheet("SE");
+    const snMatchSheet = workbook.addWorksheet("SN Machine Component");
 
     const palletFile = req.files.find((file) =>
       file.originalname.includes("Pallet")
@@ -225,6 +226,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const proOrders = [];
     const seOrders = [];
     const scubaOrders = [];
+    const snFound = [];
+    let snRow = 1;
     let proRow = 2;
     let seRow = 2;
     let scubaRow = 2;
@@ -355,6 +358,19 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           errorCode = matchedError;
           console.log("Error Code:", errorCode);
         }
+        const matchedSN = findMatchingSN(sn, repairSheet, "S/N");
+        if (matchedSN) {
+          // only add match sn to the sheet if machine is used as component
+          const grayMat = findMatchingSN(sn, repairSheet, "Scuba SE Gray");
+          const whiteMat = findMatchingSN(sn, repairSheet, "Scuba SE White");
+          if (grayMat || whiteMat ) {
+            console.log("Machine used as component");
+            insertRepairData(sn, repairSheet, snMatchSheet, snRow);
+            snRow++;
+            console.log("SN Matched:", snRow);
+            snFound.push({ sn });
+          }
+        }
         if (model.includes("Pro")) {
           insertRepairData(sn, repairSheet, proSheet, proRow);
           proRow++;
@@ -472,6 +488,11 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(seOrderNumColIndex + 12).value = qty;
       }
     );
+
+    snFound.forEach(({ sn }, index) => {
+      const row = snMatchSheet.getRow(index + 1);
+      row.getCell(1).value = sn;
+    });
 
     const totalScrap = machines.length;
     console.log("Total Scrap:", totalScrap);
