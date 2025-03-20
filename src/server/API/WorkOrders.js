@@ -83,8 +83,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   console.log("Formatted date:", formattedDate);
 
   const finishDate = inputDate
-    ? new Date(inputDate).toLocaleDateString("en-US")
-    : new Date().toLocaleDateString("en-US");
+    ? new Date(inputDate).toLocaleDateString("zh-TW")
+    : new Date().toLocaleDateString("zh-TW");
 
   console.log("Finish Date:", finishDate);
 
@@ -209,13 +209,23 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
               templateRow.getCell(templateColIndex).value = partSku;
 
               // insert qty of part
-              templateRow.getCell(templateColIndex + 1).value = cell.value;
+              templateRow.getCell(templateColIndex + 2).value = cell.value;
               const templateHeader = templateSheet
                 .getRow(1)
                 .getCell(templateColIndex).value;
               console.log(
                 `Qty: ${cell.value} and Part SKU: ${partSku} inserted under ${templateHeader}`
               );
+
+              // insert status of part used
+              if (
+                templateHeader.includes("Scuba SE Gray") ||
+                templateHeader.includes("Scuba SE White")
+              ) {
+                templateRow.getCell(templateColIndex + 1).value = "待处理";
+              } else {
+                templateRow.getCell(templateColIndex + 1).value = "正常";
+              }
             }
           });
           break;
@@ -350,7 +360,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       if (repairSheet) {
         const matchedDate = findMatchingSN(sn, repairSheet, "Date");
         if (matchedDate) {
-          startDate = new Date(matchedDate).toLocaleDateString("en-US");
+          startDate = new Date(matchedDate).toLocaleDateString("zh-TW");
           console.log("Start Date:", startDate);
         }
         const matchedError = findMatchingSN(sn, repairSheet, "Problem");
@@ -363,7 +373,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           // only add match sn to the sheet if machine is used as component
           const grayMat = findMatchingSN(sn, repairSheet, "Scuba SE Gray");
           const whiteMat = findMatchingSN(sn, repairSheet, "Scuba SE White");
-          if (grayMat || whiteMat ) {
+          if (grayMat || whiteMat) {
             console.log("Machine used as component");
             insertRepairData(sn, repairSheet, snMatchSheet, snRow);
             snRow++;
