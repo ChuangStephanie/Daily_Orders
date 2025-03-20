@@ -25,8 +25,8 @@ export async function uploadFile(file) {
     const newDate = new Date();
     const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
     const date = newDate.getDate().toString().padStart(2, "0");
-    const today = `${month}.${date}`;
-    const fileName = `Processed ${today}.zip`;
+    const today = `${month}${date}`;
+    const fileName = `${today}.zip`;
 
     // response in blob format
     const blob = await response.blob();
