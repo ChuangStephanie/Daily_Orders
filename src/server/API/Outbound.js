@@ -57,9 +57,11 @@ const outboundProcess = async (outboundRows) => {
 
       let orgCarrier;
       if (carrier == "FEDEX_GROUND") {
-        orgCarrier = "FedEx Ground";
+        orgCarrier = "SUPERFECT FDX Ground";
       } else if (carrier == "USPS_CJ") {
-        orgCarrier = "USPS Priority Mail";
+        orgCarrier = "";
+      } else {
+        orgCarrier = carrier;
       }
 
       const isMachine = machineColName
