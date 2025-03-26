@@ -61,6 +61,8 @@ const seGraySKU = "AI00419711001";
 const seWhiteSKU = "AI00419811001";
 const scubaGraySKU = "AI00432911001";
 const scubaWhiteSKU = "AI00432311001";
+const scubaS1GraySKU = "AI00427411001";
+const scubaS1BlueSKU = "AI00430911001";
 
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
@@ -92,7 +94,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(templatePath);
     const proSheet = workbook.getWorksheet("PRO");
-    const scubaSheet = workbook.getWorksheet("Scuba");
+    const s1sheet = workbook.getWorksheet("Scuba S1");
+    const scubaSheet = workbook.getWorksheet("Scuba SE");
     const seSheet = workbook.getWorksheet("SE");
     const snMatchSheet = workbook.addWorksheet("SN Machine Component");
 
@@ -111,8 +114,11 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
     const repairWorkbook = new ExcelJS.Workbook();
     await repairWorkbook.xlsx.readFile(repairFile.path);
+    const s1RepairSheet = repairWorkbook.worksheets.find((sheet) =>
+      sheet.name.includes("Scuba S1")
+    );
     const scubaRepairSheet = repairWorkbook.worksheets.find((sheet) =>
-      sheet.name.includes("Scuba")
+      sheet.name.includes("Scuba SE")
     );
     const seRepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("SE")
@@ -143,14 +149,13 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const refurbSkuIndex = getColIndex(palletSheet, "SKU");
     const proOrderNumColIndex = getColIndex(proSheet, "Order Number");
     const seOrderNumColIndex = getColIndex(seSheet, "Order Number");
+    const s1OrderNumColIndex = getColIndex(s1sheet, "Order Number");
     const scubaOrderNumColIndex = getColIndex(scubaSheet, "Order Number");
 
     console.log(
       "indices:",
-      modelColIndex,
-      snColIndex,
-      proOrderNumColIndex,
-      seOrderNumColIndex
+      s1OrderNumColIndex,
+      scubaOrderNumColIndex,
     );
 
     // find values with in rows w matching SN
@@ -254,7 +259,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       let repairSheet = null;
       let preRefurbSku = null;
 
-      // determine which repair sheet/SKU
+      // determine which repair sheet/prerefurb SKU
       if (model.includes("6001")) {
         repairSheet = pro6001RepairSheet;
 
