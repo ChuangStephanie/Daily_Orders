@@ -545,13 +545,6 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             preRefurbSku = seWhiteSKU;
           }
         }
-        // const preRefurbSku = isPro
-        //   ? scrapMachine.model.includes("6001")
-        //     ? pro6001SKU
-        //     : pro6002SKU
-        //   : scrapMachine.model.includes("Gray")
-        //   ? seGraySKU
-        //   : seWhiteSKU;
 
         if (isPro) {
           for (let i = 0; i < qty; i++) {
