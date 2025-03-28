@@ -373,19 +373,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           errorCode = matchedError;
           console.log("Error Code:", errorCode);
         }
-        const matchedSN = findMatchingSN(sn, repairSheet, "S/N");
-        if (matchedSN) {
-          // only add match sn to the sheet if machine is used as component
-          const grayMat = findMatchingSN(sn, repairSheet, "Scuba SE Gray");
-          const whiteMat = findMatchingSN(sn, repairSheet, "Scuba SE White");
-          if (grayMat || whiteMat) {
-            console.log("Machine used as component");
-            insertRepairData(sn, repairSheet, snMatchSheet, snRow);
-            snRow++;
-            console.log("SN Matched:", snRow);
-            snFound.push({ sn });
-          }
-        }
+        
         if (model.includes("Pro")) {
           insertRepairData(sn, repairSheet, proSheet, proRow);
           proRow++;
