@@ -195,6 +195,11 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             const templateHeaderRow = templateSheet.getRow(1);
             templateHeaderRow.eachCell((cell, colNumber) => {
               const templateHeader = cleanData(cell.value);
+
+              if (templateHeader === "qty") {
+                return;
+              }
+
               if (templateHeader === header) {
                 templateColIndex = colNumber;
                 console.log(`Found matching header: ${templateHeader}`);
