@@ -63,6 +63,7 @@ const scubaGraySKU = "AI00432911001";
 const scubaWhiteSKU = "AI00432311001";
 const scubaS1GraySKU = "AI00427411001";
 const scubaS1BlueSKU = "AI00430911001";
+const scubaN1SKU = "AI00436411001";
 
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
