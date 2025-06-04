@@ -419,15 +419,16 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       } else if (model.includes("ZT2001")) {
         repairSheet = zt2001RepairSheet;
         const preModel = findMatchingSN(sn, repairSheet, "Model");
-        console.log("PreModel:", preModel);
+        console.log("ZT2001 model on repair sheet:", preModel);
+        console.log("ZT2001 model on pallet sheet:", model);
 
         if (preModel) {
-          if (preModel.includes("800B")) {
+          if (String(preModel).includes("800B")) {
             preRefurbSku = zt2001Gray;
-          } else if (preModel.includes("800")) {
+          } else if (String(preModel).includes("800")) {
             preRefurbSku = zt2001White;
           } else {
-            console.log("PreModel no color");
+            console.log("PreModel no color match, using model color");
             if (model.includes("800B")) {
               preRefurbSku = zt2001Gray;
             } else {
@@ -435,13 +436,14 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             }
           }
         } else {
-          console.log("PreModel is Null");
+          console.log("PreModel is Null, using model color");
           if (model.includes("800B")) {
             preRefurbSku = zt2001Gray;
           } else {
             preRefurbSku = zt2001White;
           }
         }
+        console.log("After ZT2001 SKU assignment:", preRefurbSku);
       }
 
       console.log("PREREFURBSKU", preRefurbSku);
@@ -668,7 +670,10 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
     // add zt2001 orders to zt2001 sheet
     zt2001Orders.forEach(
-      ({ orderNumber, startDate, preRefurbSku, refurbSku, errorCode }, index) => {
+      (
+        { orderNumber, startDate, preRefurbSku, refurbSku, errorCode },
+        index
+      ) => {
         const row = zt2001Sheet.getRow(index + 2);
         row.getCell(zt2001OrderNumColIndex).value = orderNumber;
         row.getCell(zt2001OrderNumColIndex + 1).value = location;
@@ -891,18 +896,20 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(n1OrderNumColIndex + 8).value = finishDate;
       });
 
-      zt2001ScrapOrders.forEach(({ orderNum, startDate, preRefurbSku }, index) => {
-        const row = zt2001Sheet.getRow(zt2001Orders.length + index + 2);
-        row.getCell(zt2001OrderNumColIndex).value = orderNum;
-        row.getCell(zt2001OrderNumColIndex + 1).value = location;
-        row.getCell(zt2001OrderNumColIndex + 1).style = redFont;
-        row.getCell(zt2001OrderNumColIndex + 3).value = scrap;
-        row.getCell(zt2001OrderNumColIndex + 3).style = redFont;
-        row.getCell(zt2001OrderNumColIndex + 4).value = preRefurbSku;
-        row.getCell(zt2001OrderNumColIndex + 6).value = qty;
-        row.getCell(zt2001OrderNumColIndex + 7).value = startDate;
-        row.getCell(zt2001OrderNumColIndex + 8).value = finishDate;
-      });
+      zt2001ScrapOrders.forEach(
+        ({ orderNum, startDate, preRefurbSku }, index) => {
+          const row = zt2001Sheet.getRow(zt2001Orders.length + index + 2);
+          row.getCell(zt2001OrderNumColIndex).value = orderNum;
+          row.getCell(zt2001OrderNumColIndex + 1).value = location;
+          row.getCell(zt2001OrderNumColIndex + 1).style = redFont;
+          row.getCell(zt2001OrderNumColIndex + 3).value = scrap;
+          row.getCell(zt2001OrderNumColIndex + 3).style = redFont;
+          row.getCell(zt2001OrderNumColIndex + 4).value = preRefurbSku;
+          row.getCell(zt2001OrderNumColIndex + 6).value = qty;
+          row.getCell(zt2001OrderNumColIndex + 7).value = startDate;
+          row.getCell(zt2001OrderNumColIndex + 8).value = finishDate;
+        }
+      );
     }
 
     const date = new Date()
