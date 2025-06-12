@@ -51,13 +51,14 @@ const continueOrdernum = (sheet, orderNumColIndex) => {
 
 const location = "ASD-TSL-TX";
 const refurb = "检测翻新";
+const repair = "拼修";
 const scrap = "仅检测";
 const qty = 1;
 
 // Brand new SKU
 const pro6001SKU = "AI00420711001";
 const pro6002SKU = "AI00427111001";
-const seGraySKU = "AI00419711001";
+const seGraySKU = "AI00435911001";
 const seWhiteSKU = "AI00419811001";
 const scubaGraySKU = "AI00432911001";
 const scubaWhiteSKU = "AI00432311001";
@@ -125,7 +126,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       sheet.name.includes("Scuba SE")
     );
     const seRepairSheet = repairWorkbook.worksheets.find((sheet) =>
-      sheet.name.includes("SE")
+      sheet.name.includes("ZT2003")
     );
     const pro6001RepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("6001")
@@ -250,7 +251,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
               // insert status of part used
               if (
                 templateHeader.includes("Scuba SE Gray") ||
-                templateHeader.includes("Scuba SE White")
+                templateHeader.includes("Scuba SE White") ||
+                templateHeader.includes("ZT2003")
               ) {
                 templateRow.getCell(templateColIndex + 1).value = "待处理";
               } else {
@@ -456,7 +458,15 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           console.log("Start Date:", startDate);
         }
         const matchedError = findMatchingSN(sn, repairSheet, "Problem");
-        if (matchedError) {
+        if (model.includes("ZT2002")) {
+          if (repairSheet && findMatchingSN(sn, repairSheet, "S/N")) {
+            errorCode = "CI03";
+          } else {
+            errorCode = "NF01";
+          }
+        } else if (model.includes("SE") && !model.includes("Scuba SE") && repairSheet) {
+          errorCode = "002";
+        } else if (matchedError) {
           errorCode = matchedError;
           console.log("Error Code:", errorCode);
         }
@@ -609,10 +619,18 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         index
       ) => {
         const row = scubaSheet.getRow(index + 2);
+        // check if any part has 待处理 status
+        let hasPendingStatus = false;
+        row.eachCell((cell, colNumber) => {
+          if (cell.value === "待处理") {
+            hasPendingStatus = true;
+          }
+        });
+
         row.getCell(scubaOrderNumColIndex).value = orderNumber;
         row.getCell(scubaOrderNumColIndex + 1).value = location;
         row.getCell(scubaOrderNumColIndex + 1).style = redFont;
-        row.getCell(scubaOrderNumColIndex + 3).value = refurb;
+        row.getCell(scubaOrderNumColIndex + 3).value = hasPendingStatus ? repair : refurb;
         row.getCell(scubaOrderNumColIndex + 3).style = redFont;
         row.getCell(scubaOrderNumColIndex + 4).value = preRefurbSku;
         row.getCell(scubaOrderNumColIndex + 6).value = qty;
@@ -631,10 +649,18 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         index
       ) => {
         const row = seSheet.getRow(index + 2);
+        // check if any part has 待处理 status
+        let hasPendingStatus = false;
+        row.eachCell((cell, colNumber) => {
+          if (cell.value === "待处理") {
+            hasPendingStatus = true;
+          }
+        });
+
         row.getCell(seOrderNumColIndex).value = orderNumber;
         row.getCell(seOrderNumColIndex + 1).value = location;
         row.getCell(seOrderNumColIndex + 1).style = redFont;
-        row.getCell(seOrderNumColIndex + 3).value = refurb;
+        row.getCell(seOrderNumColIndex + 3).value = hasPendingStatus ? repair : refurb;
         row.getCell(seOrderNumColIndex + 3).style = redFont;
         row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
         row.getCell(seOrderNumColIndex + 6).value = qty;
