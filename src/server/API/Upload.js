@@ -27,8 +27,8 @@ const createTime = "创建时间";
 // client info
 const carrier = "配送方式";
 const addressee = "收件人姓名";
-const state = "省份";
-const city = "市区";
+const state = "省\\州";
+const city = "城市";
 const street1 = "收件人地址1";
 const street2 = "收件人地址2";
 const zipCode = "邮编";
