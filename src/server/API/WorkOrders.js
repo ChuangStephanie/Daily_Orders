@@ -565,7 +565,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           errorCode,
         });
       } else if (model.includes("800")) {
-        orderNumber = `TSLX1${formattedDate}${scuba800Orders.length + 1}`;
+        orderNumber = `TSL800${formattedDate}${scuba800Orders.length + 1}`;
         // log order number
         console.log("Order number:", orderNumber);
         scuba800Orders.push({
@@ -897,7 +897,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         } else if (isScuba800) {
           preRefurbSku = scuba800SKU;
           for (let i = 0; i < qty; i++) {
-            const orderNum = `TSLX1${formattedDate}${
+            const orderNum = `TSL800${formattedDate}${
               lastScuba800OrderNum + scuba800ScrapOrders.length + 1
             }`;
             console.log(orderNum, preRefurbSku);
