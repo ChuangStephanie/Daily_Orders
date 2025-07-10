@@ -67,6 +67,7 @@ const scubaS1BlueSKU = "AI00430911001";
 const scubaN1SKU = "AI00436411001";
 const zt2001Gray = "AI00419361001";
 const zt2001White = "AI00419461001";
+const scuba800SKU = "AI00433511001";
 
 workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
   if (!req.files) {
@@ -103,6 +104,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const seSheet = workbook.getWorksheet("SE");
     const n1Sheet = workbook.getWorksheet("Scuba N1");
     const zt2001Sheet = workbook.getWorksheet("ZT2001");
+    const scuba800Sheet = workbook.getWorksheet("Scuba 800");
 
     const palletFile = req.files.find((file) =>
       file.originalname.includes("Pallet")
@@ -119,6 +121,10 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
 
     const repairWorkbook = new ExcelJS.Workbook();
     await repairWorkbook.xlsx.readFile(repairFile.path);
+
+    const scuba800RepairSheet = repairWorkbook.worksheets.find((sheet) =>
+      sheet.name.includes("Scuba 800")
+    );
     const s1RepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("Scuba S1")
     );
@@ -161,8 +167,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const scubaOrderNumColIndex = getColIndex(scubaSheet, "Order Number");
     const n1OrderNumColIndex = getColIndex(n1Sheet, "Order Number");
     const zt2001OrderNumColIndex = getColIndex(zt2001Sheet, "Order Number");
-
-    console.log("s1 indices:", s1OrderNumColIndex, scubaOrderNumColIndex);
+    const scuba800OrderNumColIndex = getColIndex(scuba800Sheet, "Order Number");
 
     // find values with in rows w matching SN
     const findMatchingSN = (sn, repairSheet, header) => {
@@ -252,7 +257,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
               if (
                 templateHeader.includes("Scuba SE Gray") ||
                 templateHeader.includes("Scuba SE White") ||
-                templateHeader.includes("ZT2003")
+                templateHeader.includes("ZT2003") ||
+                templateHeader.includes("Scuba 800")
               ) {
                 templateRow.getCell(templateColIndex + 1).value = "待处理";
               } else {
@@ -271,12 +277,14 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const s1Orders = [];
     const n1Orders = [];
     const zt2001Orders = [];
+    const scuba800Orders = [];
     let proRow = 2;
     let seRow = 2;
     let scubaRow = 2;
     let s1Row = 2;
     let n1Row = 2;
     let zt2001Row = 2;
+    let scuba800Row = 2;
 
     palletSheet.eachRow((row, rowIndex) => {
       if (rowIndex === 1) return;
@@ -413,6 +421,11 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             preRefurbSku = seWhiteSKU;
           }
         }
+      } else if (model.includes("800")) {
+        repairSheet = scuba800RepairSheet;
+        const preModel = findMatchingSN(sn, repairSheet, "Model");
+        console.log("PreModel:", preModel);
+        preRefurbSku = scuba800SKU;
       } else if (model.includes("Scuba N1")) {
         repairSheet = s1RepairSheet;
         const preModel = findMatchingSN(sn, repairSheet, "Model");
@@ -458,13 +471,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           console.log("Start Date:", startDate);
         }
         const matchedError = findMatchingSN(sn, repairSheet, "Problem");
-        if (model.includes("ZT2002")) {
+        if (model.includes("ZT2002") || model.includes("800")) {
           if (repairSheet && findMatchingSN(sn, repairSheet, "S/N")) {
             errorCode = "CI03";
           } else {
             errorCode = "NF01";
           }
-        } else if (model.includes("SE") && !model.includes("Scuba SE") && repairSheet) {
+        } else if (
+          model.includes("SE") &&
+          !model.includes("Scuba SE") &&
+          repairSheet
+        ) {
           errorCode = "002";
         } else if (matchedError) {
           errorCode = matchedError;
@@ -487,6 +504,10 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           insertRepairData(sn, repairSheet, seSheet, seRow);
           seRow++;
           console.log("SE row count:", seRow);
+        } else if (model.includes("800")) {
+          insertRepairData(sn, repairSheet, scuba800Sheet, scuba800Row);
+          scuba800Row++;
+          console.log("Scuba N1 row count:", n1Row);
         } else if (model.includes("Scuba N1")) {
           insertRepairData(sn, repairSheet, n1Sheet, n1Row);
           n1Row++;
@@ -537,6 +558,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         // log order number
         console.log("Order number:", orderNumber);
         seOrders.push({
+          orderNumber,
+          startDate,
+          preRefurbSku,
+          refurbSku,
+          errorCode,
+        });
+      } else if (model.includes("800")) {
+        orderNumber = `TSLX1${formattedDate}${scuba800Orders.length + 1}`;
+        // log order number
+        console.log("Order number:", orderNumber);
+        scuba800Orders.push({
           orderNumber,
           startDate,
           preRefurbSku,
@@ -630,7 +662,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(scubaOrderNumColIndex).value = orderNumber;
         row.getCell(scubaOrderNumColIndex + 1).value = location;
         row.getCell(scubaOrderNumColIndex + 1).style = redFont;
-        row.getCell(scubaOrderNumColIndex + 3).value = hasPendingStatus ? repair : refurb;
+        row.getCell(scubaOrderNumColIndex + 3).value = hasPendingStatus
+          ? repair
+          : refurb;
         row.getCell(scubaOrderNumColIndex + 3).style = redFont;
         row.getCell(scubaOrderNumColIndex + 4).value = preRefurbSku;
         row.getCell(scubaOrderNumColIndex + 6).value = qty;
@@ -660,7 +694,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(seOrderNumColIndex).value = orderNumber;
         row.getCell(seOrderNumColIndex + 1).value = location;
         row.getCell(seOrderNumColIndex + 1).style = redFont;
-        row.getCell(seOrderNumColIndex + 3).value = hasPendingStatus ? repair : refurb;
+        row.getCell(seOrderNumColIndex + 3).value = hasPendingStatus
+          ? repair
+          : refurb;
         row.getCell(seOrderNumColIndex + 3).style = redFont;
         row.getCell(seOrderNumColIndex + 4).value = preRefurbSku;
         row.getCell(seOrderNumColIndex + 6).value = qty;
@@ -669,6 +705,38 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(seOrderNumColIndex + 9).value = errorCode;
         row.getCell(seOrderNumColIndex + 10).value = refurbSku;
         row.getCell(seOrderNumColIndex + 12).value = qty;
+      }
+    );
+
+    // add scuba 800 orders to scuba 800 sheet
+    scuba800Orders.forEach(
+      (
+        { orderNumber, startDate, preRefurbSku, refurbSku, errorCode },
+        index
+      ) => {
+        const row = scuba800Sheet.getRow(index + 2);
+        // check if any part has 待处理 status
+        let hasPendingStatus = false;
+        row.eachCell((cell, colNumber) => {
+          if (cell.value === "待处理") {
+            hasPendingStatus = true;
+          }
+        });
+
+        row.getCell(scuba800OrderNumColIndex).value = orderNumber;
+        row.getCell(scuba800OrderNumColIndex + 1).value = location;
+        row.getCell(scuba800OrderNumColIndex + 1).style = redFont;
+        row.getCell(scuba800OrderNumColIndex + 3).value = hasPendingStatus
+          ? repair
+          : refurb;
+        row.getCell(scuba800OrderNumColIndex + 3).style = redFont;
+        row.getCell(scuba800OrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(scuba800OrderNumColIndex + 6).value = qty;
+        row.getCell(scuba800OrderNumColIndex + 7).value = startDate;
+        row.getCell(scuba800OrderNumColIndex + 8).value = finishDate;
+        row.getCell(scuba800OrderNumColIndex + 9).value = errorCode;
+        row.getCell(scuba800OrderNumColIndex + 10).value = refurbSku;
+        row.getCell(scuba800OrderNumColIndex + 12).value = qty;
       }
     );
 
@@ -726,6 +794,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const s1ScrapOrders = [];
       const n1ScrapOrders = [];
       const zt2001ScrapOrders = [];
+      const scuba800ScrapOrders = [];
 
       const lastProOrderNum = proOrders.length;
       const lastSeOrderNum = seOrders.length;
@@ -733,6 +802,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const lastS1OrderNum = s1Orders.length;
       const lastN1OrderNum = n1Orders.length;
       const lastZt2001OrderNum = zt2001Orders.length;
+      const lastScuba800OrderNum = scuba800Orders.length;
 
       console.log(
         lastProOrderNum,
@@ -740,7 +810,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         lastScubaOrderNum,
         lastS1OrderNum,
         lastN1OrderNum,
-        lastZt2001OrderNum
+        lastZt2001OrderNum,
+        lastScuba800OrderNum
       );
 
       machines.forEach((scrapMachine, i) => {
@@ -751,6 +822,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         const isSe = scrapMachine.model.includes("SE");
         const isN1 = scrapMachine.model.includes("Scuba N1");
         const isZt2001 = scrapMachine.model.includes("ZT2001");
+        const isScuba800 = scrapMachine.model.includes("800");
         const qty = scrapMachine.qty;
         let preRefurbSku = null;
 
@@ -817,6 +889,19 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             }`;
             console.log(orderNum, preRefurbSku);
             seScrapOrders.push({
+              orderNum,
+              startDate: finishDate,
+              preRefurbSku,
+            });
+          }
+        } else if (isScuba800) {
+          preRefurbSku = scuba800SKU;
+          for (let i = 0; i < qty; i++) {
+            const orderNum = `TSLX1${formattedDate}${
+              lastScuba800OrderNum + scuba800ScrapOrders.length + 1
+            }`;
+            console.log(orderNum, preRefurbSku);
+            scuba800ScrapOrders.push({
               orderNum,
               startDate: finishDate,
               preRefurbSku,
@@ -907,6 +992,19 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(seOrderNumColIndex + 6).value = qty;
         row.getCell(seOrderNumColIndex + 7).value = startDate;
         row.getCell(seOrderNumColIndex + 8).value = finishDate;
+      });
+
+      scuba800ScrapOrders.forEach(({ orderNum, startDate, preRefurbSku }, index) => {
+        const row = scuba800Sheet.getRow(scuba800Orders.length + index + 2);
+        row.getCell(scuba800OrderNumColIndex).value = orderNum;
+        row.getCell(scuba800OrderNumColIndex + 1).value = location;
+        row.getCell(scuba800OrderNumColIndex + 1).style = redFont;
+        row.getCell(scuba800OrderNumColIndex + 3).value = scrap;
+        row.getCell(scuba800OrderNumColIndex + 3).style = redFont;
+        row.getCell(scuba800OrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(scuba800OrderNumColIndex + 6).value = qty;
+        row.getCell(scuba800OrderNumColIndex + 7).value = startDate;
+        row.getCell(scuba800OrderNumColIndex + 8).value = finishDate;
       });
 
       n1ScrapOrders.forEach(({ orderNum, startDate, preRefurbSku }, index) => {
