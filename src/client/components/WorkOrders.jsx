@@ -258,6 +258,7 @@ export default function WorkOrders() {
                       </MenuItem>
                       <MenuItem value="SE Gray">SE Gray</MenuItem>
                       <MenuItem value="SE White">SE White</MenuItem>
+                      <MenuItem value="Scuba 800">Scuba 800 White</MenuItem>
                       <MenuItem value="6001 Pro">6001 Pro Gray</MenuItem>
                       <MenuItem value="6002 Pro">6002 Pro Gray</MenuItem>
                       <MenuItem value="Scuba SE Gray">Scuba SE Gray</MenuItem>
