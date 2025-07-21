@@ -106,6 +106,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const n1Sheet = workbook.getWorksheet("Scuba N1");
     const zt2001Sheet = workbook.getWorksheet("ZT2001");
     const scuba800Sheet = workbook.getWorksheet("Scuba 800");
+    const scubaE1Sheet = workbook.getWorksheet("Scuba E1");
 
     const palletFile = req.files.find((file) =>
       file.originalname.includes("Pallet")
@@ -129,6 +130,9 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const s1RepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("Scuba S1")
     );
+    const scubaE1RepairSheet = repairWorkbook.worksheets.find((sheet) =>
+      sheet.name.includes("Scuba E1")
+    );
     const scubaRepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("Scuba SE")
     );
@@ -144,6 +148,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const zt2001RepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("ZT2001")
     );
+    
 
     const getColIndex = (sheet, headerName) => {
       for (let i = 1; i <= 3; i++) {
@@ -169,6 +174,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const n1OrderNumColIndex = getColIndex(n1Sheet, "Order Number");
     const zt2001OrderNumColIndex = getColIndex(zt2001Sheet, "Order Number");
     const scuba800OrderNumColIndex = getColIndex(scuba800Sheet, "Order Number");
+    const scubaE1OrderNumColIndex = getColIndex(scubaE1Sheet, "Order Number");
 
     // find values with in rows w matching SN
     const findMatchingSN = (sn, repairSheet, header) => {
@@ -279,6 +285,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     const n1Orders = [];
     const zt2001Orders = [];
     const scuba800Orders = [];
+    const scubaE1Orders = [];
     let proRow = 2;
     let seRow = 2;
     let scubaRow = 2;
@@ -286,6 +293,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
     let n1Row = 2;
     let zt2001Row = 2;
     let scuba800Row = 2;
+    let scubaE1Row = 2;
 
     palletSheet.eachRow((row, rowIndex) => {
       if (rowIndex === 1) return;
@@ -422,6 +430,11 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
             preRefurbSku = seWhiteSKU;
           }
         }
+      } else if (model.includes("E1")) {
+        repairSheet = scubaE1RepairSheet;
+        const preModel = findMatchingSN(sn, repairSheet, "Model");
+        console.log("PreModel:", preModel);
+        preRefurbSku = scubaE1SKU;
       } else if (model.includes("800")) {
         repairSheet = scuba800RepairSheet;
         const preModel = findMatchingSN(sn, repairSheet, "Model");
@@ -517,6 +530,10 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           insertRepairData(sn, repairSheet, zt2001Sheet, zt2001Row);
           zt2001Row++;
           console.log("ZT2001 row count:", zt2001Row);
+        } else if (model.includes("E1")) {
+          insertRepairData(sn, repairSheet, scubaE1Sheet, scubaE1Row);
+          scubaE1Row++;
+          console.log("Scuba E1 row count:", scubaE1Row);
         }
       }
 
@@ -598,6 +615,17 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           refurbSku,
           errorCode,
         });
+      } else if (model.includes("E1")) {
+        orderNumber = `TSLX3${formattedDate}${scubaE1Orders.length + 1}`;
+        // log order number
+        console.log("Order number:", orderNumber);
+        scubaE1Orders.push({
+          orderNumber,
+          startDate,
+          preRefurbSku,
+          refurbSku,
+          errorCode,
+        });
       }
     });
 
@@ -642,6 +670,28 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         row.getCell(s1OrderNumColIndex + 9).value = errorCode;
         row.getCell(s1OrderNumColIndex + 10).value = refurbSku;
         row.getCell(s1OrderNumColIndex + 12).value = qty;
+      }
+    );
+
+    // add scuba E1 orders to E1 sheet
+    scubaE1Orders.forEach(
+      (
+        { orderNumber, startDate, preRefurbSku, refurbSku, errorCode },
+        index
+      ) => {
+        const row = scubaE1Sheet.getRow(index + 2);
+        row.getCell(scubaE1OrderNumColIndex).value = orderNumber;
+        row.getCell(scubaE1OrderNumColIndex + 1).value = location;
+        row.getCell(scubaE1OrderNumColIndex + 1).style = redFont;
+        row.getCell(scubaE1OrderNumColIndex + 3).value = refurb;
+        row.getCell(scubaE1OrderNumColIndex + 3).style = redFont;
+        row.getCell(scubaE1OrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(scubaE1OrderNumColIndex + 6).value = qty;
+        row.getCell(scubaE1OrderNumColIndex + 7).value = startDate;
+        row.getCell(scubaE1OrderNumColIndex + 8).value = finishDate;
+        row.getCell(scubaE1OrderNumColIndex + 9).value = errorCode;
+        row.getCell(scubaE1OrderNumColIndex + 10).value = refurbSku;
+        row.getCell(scubaE1OrderNumColIndex + 12).value = qty;
       }
     );
 
@@ -796,7 +846,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const n1ScrapOrders = [];
       const zt2001ScrapOrders = [];
       const scuba800ScrapOrders = [];
-
+      const scubaE1ScrapOrders = [];
       const lastProOrderNum = proOrders.length;
       const lastSeOrderNum = seOrders.length;
       const lastScubaOrderNum = scubaOrders.length;
@@ -804,6 +854,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       const lastN1OrderNum = n1Orders.length;
       const lastZt2001OrderNum = zt2001Orders.length;
       const lastScuba800OrderNum = scuba800Orders.length;
+      const lastScubaE1OrderNum = scubaE1Orders.length;
 
       console.log(
         lastProOrderNum,
@@ -812,7 +863,8 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         lastS1OrderNum,
         lastN1OrderNum,
         lastZt2001OrderNum,
-        lastScuba800OrderNum
+        lastScuba800OrderNum,
+        lastScubaE1OrderNum
       );
 
       machines.forEach((scrapMachine, i) => {
@@ -824,6 +876,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
         const isN1 = scrapMachine.model.includes("Scuba N1");
         const isZt2001 = scrapMachine.model.includes("ZT2001");
         const isScuba800 = scrapMachine.model.includes("800");
+        const isScubaE1 = scrapMachine.model.includes("E1");
         const qty = scrapMachine.qty;
         let preRefurbSku = null;
 
@@ -938,6 +991,19 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
               preRefurbSku,
             });
           }
+        } else if (isScubaE1) {
+          preRefurbSku = scubaE1SKU;
+          for (let i = 0; i < qty; i++) {
+            const orderNum = `TSLX3${formattedDate}${
+              lastScubaE1OrderNum + scubaE1ScrapOrders.length + 1
+            }`;
+            console.log(orderNum, preRefurbSku);
+            scubaE1ScrapOrders.push({
+              orderNum,
+              startDate: finishDate,
+              preRefurbSku,
+            });
+          }
         }
       });
 
@@ -1035,6 +1101,19 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
           row.getCell(zt2001OrderNumColIndex + 8).value = finishDate;
         }
       );
+
+      scubaE1ScrapOrders.forEach(({ orderNum, startDate, preRefurbSku }, index) => {
+        const row = scubaE1Sheet.getRow(scubaE1Orders.length + index + 2);
+        row.getCell(scubaE1OrderNumColIndex).value = orderNum;
+        row.getCell(scubaE1OrderNumColIndex + 1).value = location;
+        row.getCell(scubaE1OrderNumColIndex + 1).style = redFont;
+        row.getCell(scubaE1OrderNumColIndex + 3).value = scrap;
+        row.getCell(scubaE1OrderNumColIndex + 3).style = redFont;
+        row.getCell(scubaE1OrderNumColIndex + 4).value = preRefurbSku;
+        row.getCell(scubaE1OrderNumColIndex + 6).value = qty;
+        row.getCell(scubaE1OrderNumColIndex + 7).value = startDate;
+        row.getCell(scubaE1OrderNumColIndex + 8).value = finishDate;
+      });
     }
 
     const date = new Date()
