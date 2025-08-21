@@ -114,6 +114,12 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
       colIndices[cell.value] = colNumber;
     });
+    const headerRow2 = worksheet.getRow(2);
+    headerRow2.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      if (colIndices[cell.value] === undefined) {
+        colIndices[cell.value] = colNumber;
+      }
+    });
 
     const columnIndex = colIndices[columnName];
     const skuIndex = colIndices["SKU1"];
@@ -133,14 +139,6 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
 
     if (columnIndex === undefined || trackingNumIndex === undefined) {
       return res.status(400).send("Column not found");
-    }
-
-    if (
-      sku2Index === undefined ||
-      sku3Index === undefined ||
-      sku4Index === undefined
-    ) {
-      return res.status(400).send("SKU columns not found");
     }
 
     // filter rows based on search term
@@ -166,20 +164,49 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
           return;
         }
 
-        // get SKU values
-        const skus = [
-          { sku: "SKU1", skuValue: row.getCell(skuIndex).value },
-          { sku: "SKU2", skuValue: row.getCell(sku2Index).value },
-          { sku: "SKU3", skuValue: row.getCell(sku3Index).value },
-          { sku: "SKU4", skuValue: row.getCell(sku4Index).value },
-        ];
+        // get SKU values (process SKU2/3/4 only if data exists and isn't '否')
+        const normalizeVal = (val) => {
+          if (val == null) return "";
+          if (typeof val === "object") {
+            if (val.text) return String(val.text).trim();
+            if (Array.isArray(val.richText)) {
+              return val.richText
+                .map((t) => (t && t.text ? t.text : ""))
+                .join("")
+                .trim();
+            }
+            if (val.result != null) return String(val.result).trim();
+            return String(val).trim();
+          }
+          return String(val).trim();
+        };
+
+        const skuEntries = [];
+        if (skuIndex !== undefined) {
+          skuEntries.push({ sku: "SKU1", idx: skuIndex });
+        }
+        if (sku2Index !== undefined) {
+          skuEntries.push({ sku: "SKU2", idx: sku2Index });
+        }
+        if (sku3Index !== undefined) {
+          skuEntries.push({ sku: "SKU3", idx: sku3Index });
+        }
+        if (sku4Index !== undefined) {
+          skuEntries.push({ sku: "SKU4", idx: sku4Index });
+        }
+
+        const skus = skuEntries
+          .map((e) => ({ sku: e.sku, skuValue: normalizeVal(row.getCell(e.idx).value), idx: e.idx }))
+          .filter((e) => e.skuValue && (e.sku === "SKU1" || e.skuValue !== "否"));
+
+        const onlySKU1 = skus.length === 1 && skus[0].sku === "SKU1";
 
         let addedOriginalRow = false;
 
         // change to +1 and +2 if the extra columns aren't there
         skus.forEach((skuData, i) => {
           if (skuData.skuValue) {
-            const currentSKUIndex = colIndices[skuData.sku];
+            const currentSKUIndex = skuData.idx;
             let currentItemIndex, currentQtyIndex;
 
             if (skuData.sku === "SKU1") {
@@ -214,7 +241,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
               [zipCode]: row.getCell(zipIndex).value,
             };
 
-            if (i === 0 && !skus.slice(1).some((sku) => sku.skuValue)) {
+            if (skuData.sku === "SKU1" && onlySKU1) {
               // push whole row if only SKU1 has data
               filteredRows.push(retainColumns.map((col) => newRow[col] || ""));
               // console.log("Order has 1 item:", row.values);
