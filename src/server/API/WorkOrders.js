@@ -58,7 +58,7 @@ const qty = 1;
 // Brand new SKU
 const pro6001SKU = "AI00420711001";
 const pro6002SKU = "AI00427111001";
-const seGraySKU = "AI00435911001";
+const seGraySKU = "AI00419711001";
 const seWhiteSKU = "AI00419811001";
 const scubaGraySKU = "AI00432911001";
 const scubaWhiteSKU = "AI00432311001";
