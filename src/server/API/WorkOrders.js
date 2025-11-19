@@ -134,7 +134,7 @@ workRouter.post("/work-orders", upload.array("files"), async (req, res) => {
       sheet.name.includes("Scuba SE")
     );
     const seRepairSheet = repairWorkbook.worksheets.find((sheet) =>
-      sheet.name.includes("ZT2003")
+      sheet.name.includes("ZT2002")
     );
     const pro6001RepairSheet = repairWorkbook.worksheets.find((sheet) =>
       sheet.name.includes("6001")
